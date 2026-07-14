@@ -1,7 +1,7 @@
 <div align="center">
-  
+
 # 💫 About Me:
-**Raha**
+Raha
 
 ## 🌐 Socials:
 [![email](https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white)](mailto:r12312719@gmail.com) 
@@ -20,13 +20,6 @@
 ---
 [![](https://komarev.com/ghpvc/?username=Raha423&icon=2&color=1)](https://visitcount.itsvg.in)
 
-</div>
-
-<style>
-  body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-  }
-</style>
-
 <!-- Proudly created with GPRM ( https://gprm.itsvg.in ) -->
+
+</div>
