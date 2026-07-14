@@ -1,3 +1,5 @@
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 20px; border-radius: 15px;">
+
 <div align="center">
 
 # 💫 About Me:
@@ -21,5 +23,7 @@ Raha
 [![](https://komarev.com/ghpvc/?username=Raha423&icon=2&color=1)](https://visitcount.itsvg.in)
 
 <!-- Proudly created with GPRM ( https://gprm.itsvg.in ) -->
+
+</div>
 
 </div>
