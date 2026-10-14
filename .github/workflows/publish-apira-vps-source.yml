@@ -1,0 +1,69 @@
+name: Publish Apira VPS source tree
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/publish-apira-vps-source.yml'
+      - 'apira-vps/Tools/**'
+      - 'apira-vps/Backend'
+      - 'apira-vps/Extensions'
+      - 'apira-vps/Notifications'
+      - 'apira-vps/README.md'
+      - 'apira-vps/LICENSE'
+      - 'apira-vps/NOTICE.md'
+      - 'apira-vps/docs/**'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand distributable packages into source tree
+        run: |
+          set -euxo pipefail
+          rm -rf apira-vps/source
+          mkdir -p apira-vps/source/Tools/packages apira-vps/source/UI
+
+          cp apira-vps/Backend apira-vps/source/Backend
+          cp apira-vps/Extensions apira-vps/source/Extensions
+          cp apira-vps/Notifications apira-vps/source/Notifications
+          cp apira-vps/LICENSE apira-vps/source/LICENSE
+          cp apira-vps/README.md apira-vps/source/README.md
+          cp apira-vps/NOTICE.md apira-vps/source/NOTICE.md
+          cp apira-vps/Tools/*.zip apira-vps/source/Tools/packages/
+
+          for archive in apira-vps/Tools/*.zip; do
+            name="$(basename "$archive" .zip)"
+            out="apira-vps/source/Tools/${name}__extracted"
+            mkdir -p "$out"
+            unzip -q "$archive" -d "$out"
+          done
+
+          cp apira-vps/source/Tools/WeVPSControl__extracted/WeVPSControl/ui/index.html apira-vps/source/UI/index.html
+          cp apira-vps/source/Tools/WeVPSControl__extracted/WeVPSControl/ui/login.html apira-vps/source/UI/login.html
+
+          for name in BackupCenter FileManager Terminal WEVPSNetwork; do
+            mkdir -p "apira-vps/source/UI/$name"
+            cp "apira-vps/source/Tools/${name}__extracted/${name}/index.html" "apira-vps/source/UI/$name/index.html"
+          done
+
+          mkdir -p apira-vps/source/UI/WEVPSInstaller
+          cp apira-vps/source/Tools/WEVPSInstaller__extracted/WEVPSInstaller/bin/index.html apira-vps/source/UI/WEVPSInstaller/index.html
+
+          (cd apira-vps/Tools && sha256sum *.zip | sort -k2) > apira-vps/SHA256SUMS
+
+      - name: Commit expanded source tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apira-vps/source apira-vps/SHA256SUMS
+          if git diff --cached --quiet; then
+            echo 'Source tree is already up to date.'
+          else
+            git commit -m 'Publish expanded Apira VPS source tree'
+            git push
+          fi
