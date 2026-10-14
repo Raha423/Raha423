@@ -4,7 +4,7 @@ set -euo pipefail
 CONTROL_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "$(uname -s)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
-  echo "This WeVPS Control build requires Linux x86_64." >&2
+  echo "This Apira VPS Control build requires Linux x86_64." >&2
   exit 1
 fi
 
