@@ -32,6 +32,28 @@ admin
 
 A strong random password is generated during the first installation and shown once in the terminal. Only its salted `scrypt` hash is stored afterwards.
 
+## Languages
+
+Apira VPS supports both **English** and **Persian (فارسی)**.
+
+Open **Settings → Language** and choose:
+
+- **English** — left-to-right interface.
+- **فارسی** — Persian translation with right-to-left (RTL) layout.
+
+The selected language is stored locally in the browser and is shared across the main control panel and installed Apira VPS extensions. Dynamic interface text such as status cards, dialogs, notifications and operation messages is translated as it appears.
+
+Technical identifiers and executable content such as shell commands, Linux paths, API fields, Docker/Git names, code blocks and protocol names remain unchanged where translating them could make the interface inaccurate or break copy/paste workflows.
+
+Translation resources are maintained in:
+
+```text
+apira-vps/i18n/apira-i18n.js
+apira-vps/i18n/apira-fa.json
+```
+
+The package publishing workflow embeds these resources directly into the HTML of every published tool, so Persian support does not depend on an external translation service or a separate static-file route.
+
 ## Included modules
 
 - **Apira VPS Control** — dashboard, CPU/RAM/disk/network information, system details, processes, services, logs and security overview.
@@ -84,8 +106,9 @@ apira-vps/
 ├── Backend
 ├── Extensions
 ├── Notifications
-├── Tools/               # installable packages
-├── source/              # expanded project files
+├── i18n/               # English/Persian localization resources
+├── Tools/              # installable packages
+├── source/             # expanded project files
 └── docs/
     └── FEATURES.md
 ```
@@ -151,4 +174,4 @@ For production use, place the panel behind HTTPS/reverse-proxy protection and ap
 
 This distribution contains modified components originating from an MIT-licensed upstream project. The original copyright and MIT permission notice are preserved in [`LICENSE`](LICENSE), and modification/attribution notes are documented in [`NOTICE.md`](NOTICE.md).
 
-The product branding, local-auth adaptation, package hosting and public distribution in this repository are provided as **Apira VPS**.
+The product branding, local-auth adaptation, package hosting, bilingual interface and public distribution in this repository are provided as **Apira VPS**.
