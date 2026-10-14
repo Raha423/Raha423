@@ -44,7 +44,11 @@ A strong random password is generated during the first installation and shown on
 - **Resource Sentinel** — CPU, RAM, disk, I/O, network, load and temperature monitoring with configurable alerts.
 - **API Core** — privileged REST API for system metrics, processes, systemd, files, terminal, Docker, network, firewall/fail2ban, Git, users and cron with API-key controls.
 
-More details are available in [`docs/FEATURES.md`](docs/FEATURES.md).
+### Complete capability guide
+
+The project has far more operations than the short list above. The complete module-by-module capability inventory — including network rollback, backups, Docker/Git/Cron/Screen operations, alerting and the full API Core surface — is documented here:
+
+**[`docs/FEATURES.md` — Complete Apira VPS capability guide](docs/FEATURES.md)**
 
 ## Local authentication
 
@@ -137,6 +141,11 @@ SHA-256 checksums for all published ZIP packages are available in [`SHA256SUMS`]
 Apira VPS is a privileged server-administration panel. Terminal, file, service and API access should be treated as root-level access.
 
 For production use, place the panel behind HTTPS/reverse-proxy protection and appropriate firewall/access rules instead of exposing port `789` openly to the Internet.
+
+## Repositories
+
+- **Apira VPS maintained distribution:** https://github.com/Raha423/Raha423/tree/main/apira-vps
+- **Original upstream project:** https://github.com/WEVPSAPI/VMTOOL
 
 ## License and attribution
 
