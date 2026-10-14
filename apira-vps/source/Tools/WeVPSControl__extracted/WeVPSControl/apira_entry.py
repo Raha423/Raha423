@@ -14,5 +14,6 @@ vmtool.authenticate_against_backend = _local_auth
 vmtool.authenticate_with_backend = _local_auth
 vmtool.get_backend_api_url = lambda: 'local://apira-vps'
 vmtool.get_backend_url = lambda: 'local://apira-vps'
+vmtool.EXTENSIONS_MANIFEST_URL = 'https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Extensions'
 
 app = vmtool.app
