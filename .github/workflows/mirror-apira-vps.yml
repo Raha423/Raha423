@@ -63,6 +63,86 @@ jobs:
                       p.write_text(t, encoding='utf-8')
 
               if zname == 'WeVPSControl.zip':
+                  # Extension installs can restart the control service. The upstream UI
+                  # refreshes once immediately, which can leave a stale "Not installed"
+                  # card even though the extension was installed successfully. Inject a
+                  # retrying status refresh and treat "already installed" as a refresh.
+                  for ui_index in d.rglob('ui/index.html'):
+                      u = ui_index.read_text(encoding='utf-8')
+                      if 'APIRA_EXTENSION_REFRESH_PATCH' not in u:
+                          marker = u.rfind('})();')
+                          if marker != -1:
+                              patch = r'''
+            // APIRA_EXTENSION_REFRESH_PATCH
+            const apiraSleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const apiraOriginalLoadTools = loadTools;
+            loadTools = async function({ silent = false } = {}) {
+                try {
+                    const data = await fetchJson(API.tools);
+                    state.tools = Array.isArray(data) ? data : (Array.isArray(data.tools) ? data.tools : []);
+                    renderTools();
+                    return true;
+                } catch (error) {
+                    // Keep the last known catalog during a short systemd/Gunicorn restart.
+                    if (!silent) {
+                        state.tools = [];
+                        renderTools();
+                        toast("Tools error", "Could not load tools from the API.", "error");
+                    }
+                    return false;
+                }
+            };
+            async function apiraRefreshToolsUntilSettled(name, action, attempts = 12) {
+                for (let attempt = 0; attempt < attempts; attempt += 1) {
+                    try {
+                        const data = await fetchJson(API.tools);
+                        const tools = Array.isArray(data) ? data : (Array.isArray(data.tools) ? data.tools : []);
+                        const tool = tools.find(item => String(item.name || "").toLowerCase() === String(name || "").toLowerCase());
+                        const settled = action === "remove" ? !tool?.installed : Boolean(tool?.installed);
+                        if (settled) {
+                            state.tools = tools;
+                            renderTools();
+                            return true;
+                        }
+                    } catch (_) {
+                        // Expected briefly while the control service reloads extension mounts.
+                    }
+                    await apiraSleep(Math.min(700 + attempt * 200, 1800));
+                }
+                return apiraOriginalLoadTools({ silent: true });
+            }
+            manageTool = async function(name, action, button) {
+                button.disabled = true;
+                const original = button.innerHTML;
+                button.innerHTML = '<i data-lucide="loader-circle"></i>Working...';
+                refreshIcons();
+                try {
+                    const response = await fetch(`/api/tools/${encodeURIComponent(name)}/${encodeURIComponent(action)}`, {
+                        method: "POST",
+                        headers: { "Accept": "application/json" }
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.success === false) throw new Error(data.message || `HTTP ${response.status}`);
+                    toast("Extensions", data.message || `${name} ${action} completed`, "success");
+                    const refreshed = await apiraRefreshToolsUntilSettled(name, action);
+                    if (!refreshed) toast("Extensions", "Operation completed; status is still reconnecting. Tap refresh once.", "warning");
+                } catch (error) {
+                    const message = String(error?.message || "Operation failed");
+                    if (/already installed/i.test(message)) {
+                        toast("Extensions", `${name} is already installed. Refreshing status...`, "success");
+                        await apiraRefreshToolsUntilSettled(name, "install");
+                        return;
+                    }
+                    toast("Extension error", message, "error");
+                    button.disabled = false;
+                    button.innerHTML = original;
+                    refreshIcons();
+                }
+            };
+'''
+                              u = u[:marker] + patch + '\n' + u[marker:]
+                              ui_index.write_text(u, encoding='utf-8')
+
                   for installer in d.rglob('install.sh'):
                       control = installer.parent
                       shutil.copy2(auth_dir / 'apira_auth.py', control / 'apira_auth.py')
