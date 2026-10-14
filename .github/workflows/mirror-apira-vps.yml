@@ -85,6 +85,18 @@ jobs:
                   t=s
                   for a,b in replacements: t=t.replace(a,b)
                   if t!=s: p.write_text(t,encoding='utf-8')
+              if zname == 'WeVPSControl.zip':
+                  for installer in d.rglob('install.sh'):
+                      s=installer.read_text(encoding='utf-8')
+                      marker='Environment=PYTHONUNBUFFERED=1\n'
+                      extra=(
+                          'Environment=PYTHONUNBUFFERED=1\n'
+                          'Environment=WEVPS_EXTENSIONS_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Extensions\n'
+                          'Environment=WEVPS_BACKEND_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Backend\n'
+                      )
+                      if 'WEVPS_EXTENSIONS_MANIFEST_URL=' not in s:
+                          s=s.replace(marker,extra)
+                          installer.write_text(s,encoding='utf-8')
               target=out/zname
               with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as z:
                   for p in sorted(d.rglob('*')):
