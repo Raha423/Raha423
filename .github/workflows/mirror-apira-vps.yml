@@ -96,6 +96,10 @@ jobs:
                   strict_ui = d / strict_csp_html[zname]
                   subprocess.run([sys.executable, 'apira-vps/patches/externalize_i18n.py', str(strict_ui)], check=True)
 
+              if zname == 'WEVPSApiCore.zip':
+                  api_ui = d / 'WEVPSApiCore/index.html'
+                  subprocess.run([sys.executable, 'apira-vps/patches/api_core_public_url.py', str(api_ui)], check=True)
+
               if zname == 'WeVPSControl.zip':
                   control_ui = d / 'WeVPSControl/ui/index.html'
                   subprocess.run([sys.executable, 'apira-vps/patches/security_guides.py', str(control_ui)], check=True)
