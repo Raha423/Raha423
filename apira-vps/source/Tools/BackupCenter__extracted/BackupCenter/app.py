@@ -784,6 +784,12 @@ def ui_script():
     return send_from_directory(str(BASE_DIR), "ui.js", mimetype="application/javascript")
 
 
+@app.get("/apira-i18n.js")
+@login_required
+def apira_i18n_script():
+    return send_from_directory(str(BASE_DIR), "apira-i18n.js", mimetype="application/javascript")
+
+
 @app.get("/api/overview")
 @login_required
 def overview():
