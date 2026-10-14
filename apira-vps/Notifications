@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "updated_at": "2026-10-14T15:30:00Z",
+  "notifications": [
+    {
+      "id": "apira-vps-tools",
+      "title": "Apira VPS Tools",
+      "message": "OpsDeck, Resource Sentinel and ApiCore are available in Apira VPS.",
+      "type": "update",
+      "date": "2026-10-14T15:30:00Z",
+      "pinned": true,
+      "enabled": true
+    }
+  ]
+}
