@@ -41,6 +41,8 @@ Open **Settings → Language** and choose:
 - **English** — left-to-right interface.
 - **فارسی** — Persian translation with right-to-left (RTL) layout.
 
+Each published tool now exposes its own language control as well. Tools that already have a native **Settings** page show the language selector inside that page. Tools without a built-in settings page receive a small tool-specific settings control that opens a dedicated language dialog. The setting remains synchronized across the main panel and all Apira VPS tools.
+
 The selected language is stored locally in the browser, synchronized between open Apira VPS tabs, and also passed to same-origin tool links through a `lang` parameter. Returning to an existing tool tab re-syncs the selected language automatically.
 
 Dynamic interface updates are translated in small batches instead of translating every DOM mutation immediately. This reduces unnecessary browser work on live tools such as Network and resource-monitoring pages, especially on mobile devices.
