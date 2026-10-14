@@ -1,4 +1,6 @@
 {
-  "version": 1,
-  "url": "https://api.wevps.space/vmtool/backend.php"
+  "version": 2,
+  "mode": "local",
+  "provider": "apira-vps",
+  "description": "Apira VPS uses server-local authentication; no external authentication backend is required."
 }
