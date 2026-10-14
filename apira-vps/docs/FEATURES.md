@@ -1,665 +1,639 @@
-# Apira VPS — Complete capability guide
+# Apira VPS — Capability Library
 
-This document describes the capabilities currently shipped in the Apira VPS distribution. The panel is a privileged server-management system: many actions change the real operating system, services, firewall, files, Docker workloads or network state.
+This page is a catalog, not a long-form manual.
 
-## Quick mental model
+Every section uses the same format:
 
-Apira VPS is made of nine main parts:
+| Feature | What it does | Example |
+|---|---|---|
 
-1. **Apira VPS Control** — the main dashboard and service/security/tools center.
-2. **File Manager** — browser file management with an SFTP-like workflow.
-3. **Terminal** — authenticated web terminal.
-4. **Network** — diagnostics plus protected network/firewall operations.
-5. **Backup Center** — scheduled backups, verification, restore and delivery.
-6. **Installer** — catalog-based server software installation.
-7. **OpsDeck** — Docker, Git, cron, GNU Screen and release-watch operations.
-8. **Resource Sentinel** — local telemetry and threshold-based alerting.
-9. **API Core** — scoped REST API for advanced server automation.
+> **Important:** Apira VPS is a privileged server-management panel. Many actions change the real server. Treat panel access like root-level access.
 
-Capabilities that depend on external Linux tools are available when those tools are installed (for example Docker, Git, GNU Screen/tmux, UFW, Fail2ban, traceroute or Supervisor).
+---
+
+## Library index
+
+| Module | What it is for | Typical use |
+|---|---|---|
+| **Apira VPS Control** | Main server dashboard and control center | Check health, manage services, security and extensions |
+| **File Manager** | Browser-based server file manager | Edit configs, upload files, move/rename/archive data |
+| **Terminal** | Web shell | Run Linux commands without opening a separate SSH client |
+| **Network** | Network diagnostics and protected network changes | Check routes, ports, reputation, MTU, firewall and connectivity |
+| **Backup Center** | Backup, restore and delivery system | Schedule backups and send them to SFTP, Telegram, Email or S3 |
+| **Installer** | Software deployment catalog | Install supported server software from the web panel |
+| **OpsDeck** | DevOps operations center | Docker, Git, Cron, GNU Screen and update watchers |
+| **Resource Sentinel** | Resource monitoring and alerts | Alert when CPU/RAM/disk/network/load thresholds are breached |
+| **API Core** | Privileged REST API | Automate server administration from bots, apps and scripts |
 
 ---
 
 # 1. Apira VPS Control
 
-The Control panel is the main entry point and shared authenticated shell for the installed extensions.
+The main panel and the place most users should start.
 
-### Dashboard and health
-- Server overview and health status.
-- CPU, RAM, swap, disk, network and load information.
-- Process visibility and process refresh.
-- Recent activity and panel health information.
-- Restart the Apira VPS control service from the interface.
-
-### Service manager
-- List systemd services and their current state.
-- Start a service.
-- Stop a service.
-- Restart a service.
-- Enable a service at boot.
-- Disable a service at boot.
-- Open service details.
-- Read service logs.
-- Restart all supported services from the panel.
-- Protected/destructive operations require confirmation where implemented.
-
-### System information
-- Host/system information in one page.
-- Copy system information for support or diagnostics.
-- Kernel/platform/runtime information exposed by the control API.
-
-### Security Center
-- Server security summary/grade.
-- SSH security information.
-- Firewall/security status exposed by the control engine.
-- Listening/exposed service information.
-- Refresh security assessment on demand.
-- Change the SSH port from the panel with administrator-password confirmation.
-
-### Tools Center
-- Discover the Apira VPS extension catalog.
-- See installed/not-installed/update-available state.
-- Install supported tools.
-- Update supported tools.
-- Remove supported non-core tools.
-- Open installed tools directly.
-- Check all tools for updates.
-- Package/update URLs point to the Apira VPS GitHub distribution.
-
-### Notifications and settings
-- Pull panel notifications from the Apira VPS notification manifest.
-- Refresh notifications manually.
-- Shared authenticated session for extensions.
-- Local logout/settings flow.
+| Feature | What it does | Example |
+|---|---|---|
+| Server overview | Shows the current state of the server in one screen | Check whether the server looks healthy after a reboot |
+| CPU monitor | Shows processor usage | Find out whether FFmpeg or another process is saturating CPU |
+| RAM monitor | Shows memory usage | Check whether the server is close to running out of RAM |
+| Swap monitor | Shows swap usage | Detect memory pressure even when RAM is not fully exhausted |
+| Disk monitor | Shows storage usage | Check whether `/` is close to full |
+| Network monitor | Shows network counters and activity | See whether traffic suddenly increased |
+| Load average | Shows Linux load information | Compare system load with CPU count |
+| Process view | Lists running processes | Find a process consuming too much CPU or memory |
+| Service manager | Lists systemd services | Find nginx, Docker or a bot service |
+| Start service | Starts a stopped systemd service | Start `nginx.service` |
+| Stop service | Stops a running service | Stop a broken worker before maintenance |
+| Restart service | Restarts a service | Restart nginx after changing its config |
+| Enable at boot | Makes a service start after reboot | Enable a bot service permanently |
+| Disable at boot | Prevents automatic startup | Disable an unused service |
+| Service details | Shows detailed service state | Inspect PID and service status |
+| Service logs | Reads journal logs for a service | Check why a service failed |
+| Restart supported services | Runs supported restart operations from the panel | Restart managed services after an update |
+| System information | Shows host, kernel and runtime details | Copy server information for debugging |
+| Copy system information | Copies diagnostic information | Send server details to support |
+| Security grade | Summarizes server security state | Quickly spot weak SSH/firewall configuration |
+| SSH security view | Shows SSH-related security information | Check authentication and SSH exposure |
+| Listening services | Helps identify exposed services | See what is listening publicly |
+| Change SSH port | Changes the SSH port with protected confirmation | Move SSH from port 22 to 2222 |
+| Tools Center | Shows installable/installed Apira VPS extensions | Open Network or install Resource Sentinel |
+| Extension update check | Checks for newer extension packages | See whether OpsDeck has an update |
+| Install extension | Installs a supported extension | Add Backup Center |
+| Update extension | Updates an installed extension | Upgrade Network while keeping the panel |
+| Remove extension | Removes supported extensions where allowed | Remove a tool you no longer use |
+| Notifications | Shows project/panel notifications | Read an update notice |
+| Restart Control | Restarts the Apira VPS panel itself | Restart the panel after a configuration change |
 
 ---
 
 # 2. File Manager
 
-A browser-based local file manager using the authenticated panel session. It does not require a separate public SFTP service.
+A browser-based file manager with an SFTP-like workflow.
 
-### Navigation
-- Browse directories from `/` or the configured managed root.
-- Back / forward history.
-- Move to parent directory.
-- Breadcrumb navigation.
-- Quick places supplied by the server session.
-- Refresh the current folder.
-- Search within the current path.
-- Mobile-ready navigation.
-
-### File and folder operations
-- Create a new file.
-- Create a new folder.
-- Upload one or multiple files.
-- Drag-and-drop upload.
-- Download files.
-- Edit text files in the browser.
-- Rename files/folders.
-- Copy files/folders.
-- Move files/folders.
-- Create ZIP archives from selected items.
-- Extract supported archives.
-- Move items to Trash by default instead of immediate permanent deletion.
-- Multi-select items.
-
-### Metadata and permissions
-- View type, path, size and modification time.
-- View UID/GID ownership.
-- View symbolic and octal permissions.
-- Change octal permissions (chmod) from the Properties dialog.
-
-### Security model
-- Uses the same Apira VPS authenticated session.
-- Same-origin local API; no separate file-manager network port is required.
-- File operations have the privileges of the panel service, so panel access must be treated as administrative/root-level access.
+| Feature | What it does | Example |
+|---|---|---|
+| Folder navigation | Opens server directories from the browser | Browse `/var/www` |
+| Breadcrumb navigation | Lets you jump to parent folders quickly | Jump from `/var/www/app/logs` back to `/var/www` |
+| Back / Forward | Keeps navigation history | Return to the folder you just left |
+| Up | Goes to the parent directory | Move from `/root/project` to `/root` |
+| Search current tree | Finds files/folders from the selected path | Search for `config.json` |
+| Create folder | Creates a new directory | Create `/root/backups` |
+| Create file | Creates a new file | Create `.env` |
+| Upload | Uploads files from the browser | Upload a ZIP release |
+| Drag & drop upload | Uploads by dropping files into the page | Drop multiple config files into a folder |
+| Download | Downloads a selected file | Download a database backup |
+| Text editor | Reads and edits text files in the browser | Edit `.env` or `nginx.conf` |
+| Rename | Renames a file or folder | Rename `app-old` to `app` |
+| Copy | Copies a file or directory | Copy a config before editing it |
+| Move | Moves a file or directory | Move logs to an archive folder |
+| ZIP archive | Creates a ZIP from selected items | Compress a project folder |
+| Extract archive | Extracts supported archives | Extract a release ZIP |
+| Trash | Moves an item to Trash instead of immediate permanent deletion | Remove an old config more safely |
+| Properties | Shows size, owner, permissions and modification time | Check why a service cannot read a file |
+| chmod | Changes Unix permissions | Change a script from `644` to `755` |
+| Multi-select | Selects multiple items for grouped actions | Archive several folders together |
+| Managed root/session info | Shows the authenticated host and managed filesystem root | Confirm which server you are editing |
 
 ---
 
 # 3. Terminal
 
-An interactive browser terminal mounted inside the authenticated panel.
+An authenticated web terminal attached to the server.
 
-- Interactive server shell.
-- Copy selected terminal text.
-- Clipboard paste and a mobile-friendly paste panel.
-- Clear terminal output.
-- Fullscreen mode.
-- Reconnect a closed terminal session.
-- Mobile keyboard focus button.
-- On-screen quick keys: Ctrl+C, Ctrl+D, Tab, Esc and arrow keys.
-- Shared panel logout/session handling.
-- Commands run with the operating-system permissions of the panel service.
+| Feature | What it does | Example |
+|---|---|---|
+| Interactive shell | Runs Linux shell commands | `systemctl status nginx` |
+| Live output | Shows command output interactively | Watch a deployment command run |
+| Copy | Copies selected terminal text | Copy an error stack trace |
+| Paste | Pastes text/commands into the terminal | Paste a multi-line command |
+| Clear | Clears the terminal display | Clean the screen before a new task |
+| Fullscreen | Expands the terminal | Work comfortably on a desktop browser |
+| Reconnect | Reconnects a closed terminal session | Recover after a temporary connection loss |
+| Mobile keyboard helper | Focuses the terminal keyboard on mobile | Continue using the terminal from a phone |
+| Ctrl+C button | Sends interrupt | Stop a stuck command |
+| Ctrl+D button | Sends EOF | Exit a shell/session |
+| Tab / Esc / arrows | Provides common terminal keys on touch devices | Navigate shell history on mobile |
 
 ---
 
 # 4. Network
 
-The Network extension combines read-only diagnostics with real network configuration. Protected network changes use confirmation and rollback logic.
+A network toolbox that includes both diagnostics and real server changes.
 
-### Overview
-- Public IP detection.
-- Network interface list and status.
-- Interface addresses, speeds and transfer counters.
-- DNS resolver information.
-- Kernel routes.
-- Connection/health overview.
-
-### Global reachability tests
-- Concurrent DNS/TCP/HTTP-style reachability checks to common global services.
-- The built-in list includes common providers/services such as Cloudflare, Google, GitHub, Docker Hub, Ubuntu, Microsoft, Apple, Amazon/AWS, Azure, Wikipedia, Reddit, Discord, Slack, OpenAI, Stack Overflow, Debian, Fedora, CentOS, npm, PyPI, GitLab, Bitbucket, DigitalOcean and Vultr.
-
-### Network configuration
-- View current kernel IP addresses.
-- Add a runtime IP address to an interface.
-- Remove a runtime IP address.
-- View routing tables.
-- Add a static/runtime route.
-- Remove a route.
-- Manage supported link/runtime network state exposed by the backend.
-- Protected changes present a review step.
-- Connectivity-confirmation window with automatic rollback support for risky network changes.
-
-### Ports, firewall and neighbors
-- List listening sockets and owning processes.
-- Open a port through the supported firewall backend.
-- Close a port.
-- Select protocol/zone where supported.
-- View ARP/NDP neighbor information.
-- Flush DNS cache.
-- Clear failed neighbor entries.
-
-### Performance and operations lab
-- Internet/server download speed test using the available backend (Cloudflare sample or installed Speedtest backend).
-- Live interface throughput monitoring.
-- Rank processes by network connection activity.
-- Automatic network health diagnosis.
-- MTU discovery to find a non-fragmenting path size.
-- Self port scanner restricted to this server's addresses.
-- IP intelligence: IP, PTR/reverse DNS, ASN/ISP/location information when available.
-- Export a JSON support/diagnostic report.
-- Create a protected network/kernel-state snapshot.
-
-### Diagnostics
-- DNS lookup.
-- TCP connectivity test.
-- Ping.
-- Other supported diagnostic actions exposed by the network backend (for example traceroute/HTTP checks when present).
-
-### IP reputation
-- Detect the server public IPv4.
-- Check common DNS-based abuse/block lists.
-- Show a listed/clean summary and individual list results.
+| Feature | What it does | Example |
+|---|---|---|
+| Network overview | Shows network health at a glance | Check public IP and interface state |
+| Interface list | Shows interfaces, addresses, speed and counters | Inspect `eth0` traffic |
+| DNS configuration | Shows resolver configuration | Verify which DNS servers are in use |
+| Routing table | Shows Linux routes | Check the default gateway |
+| Global reachability tests | Tests DNS/TCP/HTTP access to major services | Check GitHub, Docker Hub, Cloudflare and OpenAI reachability |
+| Add IP address | Adds a runtime IP to an interface | Add a secondary IPv4 |
+| Remove IP address | Removes a runtime address | Remove a temporary IP |
+| Add static route | Adds a kernel route | Route a subnet through a gateway |
+| Remove route | Removes a route | Remove a test route |
+| Protected network change | Requires review/confirmation before a risky change | Confirm before changing a route |
+| Automatic rollback | Reverts an unconfirmed network change | Avoid locking yourself out after a bad route change |
+| Listening sockets | Shows ports accepting inbound connections | Find what owns port 443 |
+| Firewall open port | Opens a protected port rule | Allow `8443/tcp` |
+| Firewall close port | Closes a protected port rule | Close an unused port |
+| ARP / NDP neighbors | Shows discovered local neighbors | Inspect gateway MAC and state |
+| Flush DNS cache | Runs a low-risk DNS recovery action | Fix stale resolver cache |
+| Refresh neighbors | Clears failed neighbor entries | Recover a broken local neighbor state |
+| Speed test | Measures server download/network performance | Compare network speed between providers |
+| Live traffic | Shows current receive/transmit throughput | Watch bandwidth while downloading a file |
+| Network-active processes | Ranks processes by connections | Find which process opened many connections |
+| Automatic network diagnosis | Checks common routing/resolver/packet problems | Diagnose why outbound access is failing |
+| MTU discovery | Finds a non-fragmenting path MTU | Diagnose tunnel fragmentation |
+| Self port scanner | Scans ports only on this server's allowed addresses | Check whether 22/80/443/789 are open locally |
+| IP intelligence | Shows ASN, ISP, location and reverse DNS | Identify the server network/provider |
+| JSON report | Exports network diagnostic data | Send a report to support |
+| Protected snapshot | Preserves current kernel/network state | Take a snapshot before risky networking changes |
+| DNS lookup | Resolves a hostname | Resolve `example.com` |
+| TCP test | Tests whether a TCP destination is reachable | Test `db.example.com:5432` |
+| Ping | Tests ICMP reachability | Ping `1.1.1.1` |
+| HTTP test | Tests web reachability and status where supported | Check whether a site answers from this server |
+| Public IP reputation | Checks DNS-based abuse/block lists | See whether the server IP is listed |
+| IP blocklist summary | Summarizes reputation results | Check how many DNSBLs report the IP |
 
 ---
 
 # 5. Backup Center
 
-Backup Center creates and manages local archives and can deliver them to several destinations.
+Backup creation, delivery, verification and restore management.
 
-### Backup jobs
-- Back up files and folders.
-- Full TAR.GZ archive mode.
-- Exclude patterns such as logs or cache paths.
-- Create named backup jobs.
-- Run all jobs or individual schedules.
-- Pause/enable schedules.
-- Retry failed backups.
-
-### Scheduling
-- Hourly.
-- Daily.
-- Weekly.
-- Monthly.
-- Execution-time selection.
-- Browser-local scheduling presentation.
-
-### Destinations
-- Local backup storage.
-- Remote server through SFTP.
-- Telegram delivery.
-- Email attachment/delivery.
-- S3-compatible object storage / MinIO.
-- Test configured destinations.
-- Remove configured destinations.
-
-### Delivery modes
-- Send the backup file.
-- Send only a status message.
-- Send a login-protected panel download link.
-- Send the file plus a protected link.
-
-### Retention and integrity
-- Keep only the newest backup.
-- Keep the newest 7 backups.
-- Keep the newest 30 backups.
-- SHA-256 integrity verification.
-- Verify an existing backup.
-
-### Recovery and history
-- Download a backup.
-- Restore a backup.
-- Delete a backup.
-- Retry backup delivery/operation where supported.
-- Backup/event history.
-- Export history from the UI.
-- Search jobs, files and destinations.
+| Feature | What it does | Example |
+|---|---|---|
+| Backup job | Saves a reusable backup definition | Create a backup job for `/var/www/app` |
+| Files/folders source | Backs up a local path | Back up `/root/project` |
+| Exclude patterns | Skips files matching patterns | Exclude `*.log` and `cache/*` |
+| TAR.GZ mode | Creates compressed full archives | Produce `project.tar.gz` |
+| Hourly schedule | Runs a job every hour | Hourly database export folder backup |
+| Daily schedule | Runs once per day | Nightly app backup |
+| Weekly schedule | Runs weekly | Weekly full archive |
+| Monthly schedule | Runs monthly | Monthly long-term archive |
+| Manual run | Runs a saved job immediately | Make a backup before an update |
+| Pause/resume schedule | Enables or disables a scheduled job | Pause backups during migration |
+| SFTP destination | Delivers backups to another server | Send a backup to a storage VPS |
+| Telegram destination | Sends supported backup/status delivery through Telegram | Send a small archive or completion notice |
+| Email destination | Sends supported backup/status delivery through email | Email a backup result |
+| S3 / MinIO destination | Sends archives to object storage | Store backups in MinIO |
+| Send backup file | Delivers the archive itself | Send the generated TAR.GZ |
+| Send status only | Delivers only success/failure information | Notify without transferring the archive |
+| Protected panel link | Sends a login-protected download link | Share a backup without attaching it |
+| Retention: latest only | Keeps only the newest backup | Minimize disk usage |
+| Retention: latest 7 | Keeps seven recent backups | Keep one week of daily backups |
+| Retention: latest 30 | Keeps thirty recent backups | Keep a month of history |
+| SHA-256 verification | Verifies archive integrity | Detect a corrupted backup |
+| Backup download | Downloads an existing archive | Download yesterday's backup |
+| Restore | Restores a supported backup | Recover deleted project files |
+| Retry | Retries a failed backup/delivery | Retry after SFTP came back online |
+| Delete backup | Removes a stored backup | Remove an obsolete archive |
+| Backup history | Shows previous runs | Find the last successful backup |
+| Export history | Exports backup history where supported | Keep an audit/report copy |
+| Test destination | Tests configured remote delivery | Verify SFTP or Telegram before scheduling |
+| Telegram test | Sends a test Telegram notification | Confirm bot token/chat ID |
+| Settings | Stores Backup Center configuration | Configure retention/delivery behavior |
 
 ---
 
 # 6. Installer
 
-The Installer is a catalog-driven software deployment center.
+A catalog-based deployment interface.
 
-### Catalog and discovery
-- Browse all available tools.
-- Search the catalog.
-- Filter by category.
-- Show only installed tools.
-- Refresh installation/status information.
+| Feature | What it does | Example |
+|---|---|---|
+| Software catalog | Shows supported installable server tools | Browse available server platforms |
+| Search | Finds a tool by name/category | Search for a monitoring tool |
+| VPN & Tunnels category | Groups supported VPN/tunnel installers | Browse VPN software |
+| AI Assistants category | Groups supported AI-related tools | Find an AI service installer |
+| Security category | Groups security tools | Find a supported security package |
+| Server Platforms category | Groups hosting/server platforms | Install a supported management platform |
+| Operating Systems category | Groups supported OS/deployment helpers | Browse OS deployment options |
+| Databases category | Groups database installers | Find a database stack |
+| Monitoring category | Groups monitoring software | Install a monitoring service |
+| Installed filter | Shows tools already installed | See what is already on the server |
+| Live installation activity | Shows installer output | Watch package installation progress |
+| Installation history | Keeps recent installation activity | Check what was installed yesterday |
+| Generated credentials | Displays credentials produced by supported installers inside the authenticated session | Save a generated admin password |
+| Refresh status | Rechecks installed state | Confirm an installation completed |
 
-### Current catalog categories
-- VPN & Tunnels.
-- AI Assistants.
-- Security.
-- Server Platforms.
-- Operating Systems.
-- Databases.
-- Monitoring.
-
-The exact tools inside a category can change with the catalog/package source.
-
-### Installation workflow
-- Open a tool details/install dialog.
-- Start installation from the browser.
-- Follow live installation activity/output.
-- View recent installation activity/history.
-- Capture credentials generated by an official installer and show them only inside the authenticated session when supported.
-- Load the latest operation.
+> The exact catalog can change as packages/manifests change.
 
 ---
 
 # 7. OpsDeck
 
-OpsDeck is the main DevOps/operations workspace. It operates the real local Docker, Git, crontab and GNU Screen/tmux tooling.
+A DevOps operations center for Docker, Git, Cron, Screen and release tracking.
 
-## Dashboard
-- Running/stopped/paused container counts.
-- Image, repository, scheduled-task and screen-session counters.
-- Pending update-watcher status.
-- Recent activity feed.
-- Docker/Git tool-health status.
-- Global search.
+## Docker and containers
 
-## Containers
-- List/search/filter containers by state.
-- Start container.
-- Stop container.
-- Restart container.
-- Remove container with typed confirmation.
-- Read container logs (selectable tail sizes up to thousands of lines).
-- Download logs as text where exposed by the UI.
-- CPU/memory/network/block-I/O snapshot.
-- Open a container console/details modal.
-
-### Inside a container
-- Browse the container filesystem with clickable folders.
-- Breadcrumb and quick-jump navigation (`/`, `/root`, `/app`, `/home`, `/opt`, `/var/log`, `/usr/src/app`).
-- Read/tail/head/list files.
-- Run shell commands through the container shell.
-
-## Docker images
-- List local images with size/age.
-- Delete an image with confirmation.
-- Prune dangling images to reclaim disk space.
+| Feature | What it does | Example |
+|---|---|---|
+| Container list | Shows Docker containers and state | Find a stopped API container |
+| Search/filter | Filters containers by name/state | Show only running containers |
+| Start | Starts a container | Start `web` |
+| Stop | Stops a container | Stop a broken worker |
+| Restart | Restarts a container | Restart after config changes |
+| Remove | Removes a container with confirmation | Delete an obsolete stopped container |
+| Container logs | Reads recent logs | Read the last 300 lines |
+| Log tail size | Selects 100/300/1000/5000-line views | Inspect a longer failure history |
+| Download logs | Saves logs as text where exposed by the UI | Keep logs for debugging |
+| Container stats | Shows CPU/memory/network/block I/O | Find a heavy container |
+| Browse inside container | Browses container filesystem | Open `/app/logs` |
+| Read files inside container | Reads head/tail/list views | Inspect an app log |
+| Execute inside container | Runs shell commands in a container | `ps aux` or `ls -la` |
+| Image list | Shows Docker images | Find old images |
+| Delete image | Removes one image | Remove an unused tag |
+| Prune images | Removes dangling images | Reclaim disk space |
 
 ## Git repositories
-- Track up to 32 server-side Git checkouts.
-- Show current branch.
-- Show dirty/changed files.
-- Show ahead/behind status.
-- View working-tree diff.
-- View recent commits.
-- List branches.
-- Switch/check out a branch.
-- Fetch remotes.
-- Safe pull using fast-forward-only behavior.
-- Stop tracking a repository without deleting the repository itself.
+
+| Feature | What it does | Example |
+|---|---|---|
+| Track repository | Adds an existing server checkout to OpsDeck | Track `/var/www/app` |
+| Branch status | Shows current branch | Confirm production is on `main` |
+| Dirty state | Shows uncommitted files | Notice a locally edited config |
+| Ahead/behind | Compares local state with remote | See that server is 2 commits behind |
+| Fetch | Fetches remote refs | Check remote changes without modifying files |
+| Safe pull | Uses fast-forward-only behavior | Update production without merge commits |
+| Branch list | Shows available branches | Find `develop` |
+| Checkout branch | Switches branch | Move a staging checkout to `develop` |
+| Commit history | Shows recent commits | Verify which commit is deployed |
+| Diff viewer | Shows working-tree changes | Review edits before pulling |
 
 ## Scheduled tasks / Cron
-- Human-readable crontab editor.
-- Schedule builder with next-run preview.
-- Create a task.
-- Edit a task.
-- Enable/disable a task.
-- Run a task immediately and capture output.
-- Delete/archive a task.
-- Restore a deleted task from the OpsDeck database.
-- Permanently purge an archived task.
-- Filter valid/invalid/enabled/disabled/deleted tasks.
 
-## GNU Screen / terminal sessions
-- List attached/detached/dead sessions.
-- Create a new detached session.
-- Read session buffer/scrollback.
-- Send input into a running session.
-- View and interact with a live session.
-- Kill a session.
-- Start a recorded/restorable session again where supported.
-- Forget archived session metadata.
-- Enable/disable per-session lock/control state.
-- Session recording endpoint exposed by the extension.
+| Feature | What it does | Example |
+|---|---|---|
+| Cron list | Parses current scheduled tasks | See all automation jobs |
+| Human-readable schedule | Explains cron timing | Understand `*/10 * * * *` |
+| Create task | Adds a cron entry | Run cleanup every night |
+| Edit task | Updates an existing cron job | Change frequency |
+| Enable/disable | Toggles a task without deleting it | Pause a backup job |
+| Run now | Executes a task immediately and captures output | Test a cron command |
+| Delete/archive | Removes a task from active crontab | Remove an old job |
+| Restore | Restores a deleted task from OpsDeck storage | Recover an accidentally deleted cron |
+| Delete forever | Permanently removes an archived task | Clean the task archive |
+| Next-run preview | Shows expected next execution | Verify scheduling before saving |
 
-## Update watchers
-- Track GitHub releases for up to 24 tools.
-- Match a release asset by filename pattern.
-- Optional pre-release tracking.
-- Detect available updates.
-- Checksum verification.
-- Backup before replacement.
-- Replace/install the selected asset.
-- Restart configured service/process after update.
-- Rollback/safety behavior for suspicious downgrade/update states.
+## GNU Screen / session management
 
-## Activity and safety
-- Audit trail of the last 200 operations.
-- Typed confirmation for destructive operations.
-- Strict argument validation.
-- Stored tokens/credentials protected by the extension's encrypted-at-rest mechanism where configured.
+| Feature | What it does | Example |
+|---|---|---|
+| Session list | Lists screen sessions by state | Find a detached bot session |
+| Create session | Starts a new detached session | Start `python bot.py` in screen |
+| View content | Reads visible buffer/scrollback | Check a long-running task |
+| Send input | Types into a live session | Send a command to an interactive process |
+| Kill session | Terminates a session | Stop a stuck screen |
+| Restart saved session | Starts a previous session again | Relaunch a worker |
+| Enable/disable tracked session | Controls tracked session behavior | Disable a saved session |
+| Recording support | Records session output where configured | Keep a session log |
+
+## Update watchers and safety
+
+| Feature | What it does | Example |
+|---|---|---|
+| GitHub release watcher | Tracks releases for configured tools | Watch a GitHub project for a new version |
+| Update available state | Marks tools with newer releases | See pending updates |
+| Asset pattern | Selects matching release assets | Track only `linux-amd64` builds |
+| Pre-release option | Can include/exclude pre-releases | Ignore beta builds |
+| Checksum verification | Validates downloaded update assets | Reject a corrupted release |
+| Backup before replacement | Preserves current install | Roll back if update fails |
+| Restart after update | Restarts the updated service/tool | Apply a new binary automatically |
+| Downgrade protection/rollback | Protects against unsafe version replacement | Restore the previous version |
+| Activity log | Keeps recent operations | See who/what action ran |
+| Typed confirmations | Protects destructive actions | Require a phrase before deleting a container |
 
 ---
 
 # 8. Resource Sentinel
 
-Resource Sentinel continuously samples local server metrics and evaluates threshold rules.
+Local resource telemetry plus threshold-based alerts.
 
-## Eleven live metric families
-- CPU usage.
-- RAM usage.
-- Swap usage.
-- Per-mount disk usage.
-- Disk read throughput.
-- Disk write throughput.
-- Download/network receive traffic.
-- Upload/network transmit traffic.
-- Load average.
-- Thermal/temperature sensors.
-- Process count.
-
-## Telemetry
-- Local psutil-based sampling.
-- Force a fresh sample from the UI.
-- Rolling history view (for example last hour, 6 hours or 24 hours).
-- Configurable sample interval from seconds to minutes.
-- Configurable history retention from hours to days.
-
-## Alert rules
-- Create, edit and delete rules.
-- Greater-than and less-than comparisons.
-- Choose a disk/mount where relevant.
-- Severity levels: Info, Warning, Critical.
-- Require a breach to persist before alerting (immediate through long sustained windows).
-- Per-rule cooldown to prevent notification storms.
-- Pause/enable a rule.
-- Simulate/test a rule without waiting for a real incident.
-
-## Incident history
-- Open and resolved alerts.
-- Acknowledge/resolve an incident.
-- Recovery notices when metrics return to normal.
-- Delivery result/status recorded with incidents.
-- Export alert history.
-- Clear alert history from the UI.
-
-## Notification channels
-- Telegram bot + Chat ID.
-- Test Telegram message.
-- SMTP email.
-- STARTTLS, TLS/SSL or local relay mode.
-- Test email message.
-- Disconnect/remove a channel.
-- Optional host label so notifications from multiple servers can be distinguished.
-
-## Security/privacy
-- Metrics are collected locally.
-- Panel authentication and CSRF protections are used by the extension.
-- Saved channel credentials are protected by the extension's encrypted credential storage.
-- Data leaves the server only through notification channels you explicitly configure.
+| Feature | What it does | Example |
+|---|---|---|
+| CPU metric | Samples CPU usage | Alert above 90% |
+| RAM metric | Samples memory usage | Alert above 85% |
+| Swap metric | Samples swap usage | Detect memory pressure |
+| Disk usage per mount | Monitors filesystem usage | Alert when `/` exceeds 90% |
+| Disk read throughput | Monitors read I/O | Detect unusual disk activity |
+| Disk write throughput | Monitors write I/O | Detect heavy writes |
+| Download traffic | Monitors receive throughput | Alert on unusual ingress |
+| Upload traffic | Monitors transmit throughput | Alert on unusual egress |
+| Load average | Watches Linux load | Detect overloaded server |
+| Temperature | Reads available thermal sensors | Alert on high temperature |
+| Process count | Watches number of processes | Detect runaway process creation |
+| Historical ranges | Shows recent metric history | View last 1/6/24 hours |
+| Alert rule | Defines a threshold condition | RAM > 90% |
+| Greater-than rule | Fires when a value exceeds a threshold | CPU > 95% |
+| Less-than rule | Fires when a value drops below a threshold | Free-space-related custom rule |
+| Sustained duration | Requires a breach to persist | CPU > 90% for 5 minutes |
+| Immediate alert | Fires without persistence delay | Disk > 98% immediately |
+| Cooldown | Prevents notification storms | Notify at most every 30 minutes |
+| Severity | Marks info/warning/critical rules | Disk 95% = critical |
+| Pause/enable rule | Temporarily disables a rule | Pause an alert during maintenance |
+| Simulate | Generates a simulated alert | Test notification formatting |
+| Alert history | Stores incidents | Review last week's alerts |
+| Open/resolved filter | Filters incident state | Show unresolved alerts only |
+| Acknowledge/resolve | Closes an incident | Mark a known issue as handled |
+| Recovery notification | Notifies when values normalize | Receive “CPU recovered” |
+| Telegram channel | Sends alerts through a Telegram bot | Alert your admin chat |
+| Email channel | Sends alerts through SMTP | Send alerts to operations email |
+| Telegram test | Sends a test message | Verify token/chat ID |
+| Email test | Sends a test email | Verify SMTP settings |
+| Sampling interval | Controls how often metrics are collected | Sample every 15 seconds |
+| History retention | Controls metric history duration | Keep 7 days |
+| Host label | Adds a server name to alerts | Distinguish `DE-1` from `IR-1` |
 
 ---
 
 # 9. API Core
 
-API Core exposes a privileged, versioned REST gateway for server automation. It is the broadest component in the suite.
+API Core exposes privileged server administration through API keys. It is intended for bots, dashboards, automations and external applications.
 
-## API-key security
-- Create named API keys.
-- Scope each key to selected modules or all modules.
-- Rate limits: selectable presets from 60 to 1000 requests/minute.
-- Expiry: never, 7, 30, 90, 365 days.
-- Enable/disable a key.
-- Revoke a key.
-- Last-used tracking.
-- Prefix display/search without exposing the full secret again.
-- Interactive REST documentation.
-- Search endpoints by name/path/scope.
-- Try an endpoint directly from the panel.
-- Generate/copy examples for cURL, Python, JavaScript, PHP and Go.
+## API key management
 
-## System API
-- Liveness/version/time check.
-- Hostname, kernel, uptime, load and process count.
-- Per-core CPU, memory, swap, disk and network metrics.
-- System journal logs with unit/priority filters.
-- Pending OS package updates.
-- Mounted filesystems and block devices.
-- `/proc/mounts` data.
-- Hardware CPU/RAM/swap/architecture information.
-- Installed package search (dpkg/rpm).
-- Get/set hostname.
-- OS/distribution details.
-- Detailed CPU information.
-- Detailed memory information.
-- SSH daemon/security configuration information.
-- Loaded kernel modules.
-- Kernel/process limits.
-- Enable/synchronize NTP.
-- Server time/timezone/NTP state.
-- Temperature sensors.
-- Logged-in users/sessions.
-- Failed SSH login analysis including top attacker IPs.
-- Install pending OS upgrades with explicit confirmation.
-- Reboot with explicit confirmation.
-- Shutdown with explicit confirmation.
+| Feature | What it does | Example |
+|---|---|---|
+| Create API key | Creates a new automation credential | Create `deploy-bot` key |
+| Scopes | Restricts a key to selected modules | Give a bot Docker access but no user-management access |
+| Rate limits | Limits requests per minute | Cap a key at 120 requests/minute |
+| Expiration | Sets an optional lifetime | Make a key expire after 30 days |
+| Never-expire option | Keeps a key valid until revoked | Internal permanent integration |
+| Enable/disable | Temporarily turns a key off | Pause an integration |
+| Revoke | Permanently removes a key | Revoke a leaked key |
+| Last-used data | Shows key usage information | Find an unused integration |
+| Interactive REST docs | Lets you browse endpoints in the panel | Search for Docker endpoints |
+| Try request | Sends a test API call from the docs | Test `/system` |
+| Code samples | Generates cURL/Python/JavaScript/PHP/Go examples | Copy Python integration code |
 
-## Processes API
-- List/search processes sorted by CPU.
-- Full process details.
-- Terminate/SIGKILL a process.
-- Send POSIX signals (TERM, KILL, HUP, INT, USR1, USR2, CONT, STOP, QUIT).
-- List open file descriptors.
+## System
 
-## Supervisor API (when Supervisor is installed)
-- List programs managed by supervisord.
-- Start/stop/restart a Supervisor program.
+| Feature | What it does | Example |
+|---|---|---|
+| Liveness | Checks API health/version/time | Monitoring probe |
+| System summary | Hostname, kernel, uptime, load and process count | Inventory dashboard |
+| Live metrics | CPU, memory, swap, disks, load and network | External monitoring |
+| Journal logs | Reads system journal with filters | Fetch error logs |
+| Pending updates | Lists OS package updates | Check apt updates |
+| Disks | Lists filesystems and block devices | Find free space |
+| Mounts | Reads kernel mount table | Audit mounted storage |
+| Hardware | Shows CPU/RAM/architecture | Server inventory |
+| Packages | Searches installed packages | Check whether nginx is installed |
+| Get/set hostname | Reads or changes hostname | Rename server to `app-1` |
+| OS details | Reads distro/kernel/boot data | Asset inventory |
+| CPU details | Reads model, cores and frequency | Capacity planning |
+| Memory details | Reads `/proc/meminfo` + swap | Memory diagnostics |
+| SSH status/config | Reads sshd state and security settings | Audit PermitRootLogin |
+| Kernel modules | Lists loaded modules | Search `nf_*` |
+| Kernel/process limits | Reads file/thread/PID/rlimits | Diagnose limit issues |
+| NTP sync | Enables/checks time synchronization | Repair server clock |
+| Time info | Returns timezone/local/UTC/NTP state | Compare server clock |
+| Temperature | Reads thermal sensors | Hardware monitoring |
+| Logged-in sessions | Lists `who` sessions | See active SSH users |
+| Failed SSH attempts | Summarizes failed logins and attacker IPs | Security monitoring |
+| OS upgrade | Runs supported package-manager upgrade | Patch the server |
+| Reboot | Reboots with explicit confirmation | Planned restart |
+| Shutdown | Powers off with explicit confirmation | Planned shutdown |
 
-## systemd Services API
-- daemon-reload.
-- List services.
-- List failed units.
-- List timers and next/last run data.
-- Unit details.
-- Unit journal logs.
-- Start/stop/restart/reload.
-- Enable/disable at boot.
-- Mask/unmask.
+## Processes and Supervisor
 
-## Terminal API
-- Execute a shell command with configurable working directory and timeout.
-- Audited execution.
-- High-risk reboot/shutdown commands are blocked from this generic terminal endpoint and have dedicated confirmed endpoints instead.
+| Feature | What it does | Example |
+|---|---|---|
+| Process list | Lists/searches processes | Find `python` processes |
+| Process detail | Shows memory, threads, parent and nice | Inspect a worker |
+| Kill | Sends TERM or KILL | Stop a stuck process |
+| POSIX signals | Sends HUP/INT/USR1/etc. | Reload a daemon with HUP |
+| Open files | Lists process file descriptors | Find what a process keeps open |
+| Supervisor status | Lists supervisord programs | Check worker state |
+| Supervisor control | Start/stop/restart supervised program | Restart a Supervisor worker |
 
-## Files API
-- Directory listing / metadata.
-- Read text files.
-- Write/append text files.
-- Download/stream files.
-- Multipart upload (up to the backend's configured limit; current docs describe 300 MB).
-- Server-side HTTP(S) file fetch/download.
-- Recursive regex content search.
-- Tail last lines of a file.
-- Recursive directory tree.
-- Directory size (`du`) and file/dir counts.
-- Create TAR.GZ archive.
-- Safely extract TAR.GZ/TGZ/ZIP with zip-slip protection.
-- Delete files/directories with critical-path restrictions.
-- Move/rename.
-- Create directories.
-- Copy files/directories.
-- chmod, including recursive mode where allowed.
-- chown owner/group.
-- SHA-256/SHA-1/MD5 checksum.
-- Create symlink.
-- Touch/create file timestamps.
-- Full metadata including ownership, mode and symlink target.
-- Rename within a directory.
-- Unified diff between two text files.
-- Find/replace in a text file with optional `.bak` backup.
-- MIME/file-type detection.
+## systemd services
 
-## Screen/tmux API
-- List sessions; GNU Screen is preferred and tmux can be used as fallback.
-- Create detached session with command/cwd.
-- Inspect a session.
-- Read window/scrollback logs.
-- Send commands/input.
-- Kill a session and child processes.
-- Clean dead GNU Screen sockets.
+| Feature | What it does | Example |
+|---|---|---|
+| daemon-reload | Reloads systemd configuration | Apply a new unit file |
+| Service list | Lists systemd services | Build a service dashboard |
+| Failed units | Lists failed services | Alert on failures |
+| Timers | Lists systemd timers | Inspect scheduled units |
+| Service detail | Reads unit state | Diagnose one unit |
+| Service logs | Reads journal for a unit | Fetch nginx logs |
+| Start/stop/restart/reload | Controls a unit | Restart a bot |
+| Enable/disable | Controls boot startup | Enable app service |
+| Mask/unmask | Prevents/allows unit startup | Lock a service off |
 
-## Docker API (when Docker is installed)
-- List/filter containers.
-- Start/stop/restart/pause/unpause.
-- Remove container.
-- Inspect container.
-- Read logs.
-- Execute a command inside a container.
-- One-shot CPU/memory/network/block-I/O stats.
-- Docker engine information.
-- List images.
-- Pull image.
-- Remove image.
-- System prune with optional volumes.
-- Register Docker Compose stacks.
-- Compose up/down/pull.
-- List processes inside a container (`docker top`).
-- Rename container.
-- Kill with a selected signal.
-- List Docker networks.
-- Inspect Docker network/IPAM/attached containers.
-- List Docker volumes.
-- Inspect volume/mountpoint/rough disk usage.
+## Remote shell
 
-## UFW Firewall API (when UFW is installed)
-- Read firewall state/default policies/rules.
-- Add allow/deny/reject/limit rule.
-- Delete a rule.
-- Enable firewall with explicit confirmation.
-- Disable firewall with explicit confirmation.
-- Reload rules.
+| Feature | What it does | Example |
+|---|---|---|
+| Execute command | Runs `bash -lc` with cwd/timeout controls and auditing | Run `uptime` from a bot |
 
-## Fail2ban API (when Fail2ban is installed)
-- List jails and banned IPs.
-- Ban an IPv4 in a jail.
-- Unban an IPv4 from a jail.
+## Files
 
-## Users API
-- List interactive users plus root.
-- Create a user.
-- Set/change password.
-- Delete a user (root is protected).
-- Optional home-directory removal on user deletion.
-- User UID/GID/home/shell/group details.
-- List authorized SSH keys with SHA-256 fingerprints.
-- Add/deduplicate a public SSH key with safe permissions.
-- Remove a selected SSH key.
+| Feature | What it does | Example |
+|---|---|---|
+| List/metadata | Lists a directory or file metadata | Inspect `/var/www` |
+| Read text | Reads a text file | Read `/etc/hostname` |
+| Write/append | Writes text with limits | Update an app `.env` |
+| Download | Streams a file | Download a log |
+| Upload | Uploads multipart files | Deploy a ZIP |
+| Fetch URL | Downloads an HTTP(S) file server-side | Fetch a release artifact |
+| Content search | Regex-searches a tree | Find `ERROR` under `/var/log` |
+| Tail | Reads last N lines | Tail a log |
+| Tree | Builds a directory tree | Inspect `/srv` structure |
+| Disk usage | Calculates tree size and counts | Measure Docker data folder |
+| Archive | Creates `.tar.gz` | Archive `/opt/app` |
+| Unarchive | Safely extracts tar/zip | Deploy an archive |
+| Delete | Deletes a non-protected path | Remove temp data |
+| Move | Moves/renames paths | Move a backup |
+| mkdir | Creates directories | Create `/srv/app` |
+| Copy | Copies files/trees | Duplicate config |
+| chmod | Changes mode | Set `750` |
+| chown | Changes owner/group | Set `www-data:www-data` |
+| Checksum | Calculates SHA-256/SHA1/MD5 | Verify a release |
+| Symlink | Creates a symbolic link | Point `/srv/current` to a release |
+| Touch | Creates/updates timestamp | Create a lock file |
+| File info | Returns detailed metadata | Inspect symlink target/owner |
+| Rename | Renames inside directory | Rename config |
+| Diff | Unified diff of text files | Compare configs |
+| Replace | Find/replace with optional backup | Toggle a config value |
+| File type | Detects MIME/file type | Identify an unknown file |
+
+## Screen/tmux sessions
+
+| Feature | What it does | Example |
+|---|---|---|
+| List sessions | Lists GNU Screen or tmux fallback sessions | Find background tasks |
+| Create session | Starts a detached session | Launch deploy script |
+| Inspect session | Gets session state | Check build session |
+| Read logs/buffer | Captures visible output and scrollback | Read deployment output |
+| Send command | Types into a session | Run a follow-up command |
+| Kill | Terminates session/children | Stop a stuck build |
+| Wipe dead sockets | Cleans dead Screen sockets | Repair stale session list |
+
+## Docker
+
+| Feature | What it does | Example |
+|---|---|---|
+| Containers | Lists containers by state | Show running containers |
+| Start/stop/restart | Controls containers | Restart API |
+| Pause/unpause | Freezes/resumes workload | Pause a heavy job |
+| Remove | Removes a container | Delete old worker |
+| Inspect | Reads image/mount/PID/network details | Debug container setup |
+| Logs | Reads container logs | Fetch last 300 lines |
+| Exec | Runs commands in container | `ps aux` |
+| Stats | CPU/memory/network/block I/O snapshot | Monitor usage |
+| Engine info | Docker version/resources summary | Inventory Docker host |
+| Images | Lists local images | Audit image storage |
+| Pull | Pulls an image | Pull `nginx:latest` |
+| Delete image | Removes an image | Clean old version |
+| System prune | Prunes unused Docker data | Reclaim disk |
+| Compose register | Registers a compose stack path | Track `/opt/app` |
+| Compose up/down/pull | Controls Compose stack | Redeploy a stack |
+| Container top | Lists processes inside container | Debug high CPU |
+| Rename container | Renames a container | Rename `old-api` |
+| Kill with signal | Sends container signal | Send KILL/HUP |
+| Networks | Lists/inspects Docker networks | Debug networking |
+| Volumes | Lists/inspects named volumes | Check volume mountpoint/size |
+
+## Firewall and Fail2ban
+
+| Feature | What it does | Example |
+|---|---|---|
+| UFW status | Shows firewall state/rules | Audit exposed ports |
+| Add rule | allow/deny/reject/limit | Allow 443/tcp |
+| Delete rule | Removes a matching rule | Remove old SSH allowlist |
+| Enable/disable UFW | Toggles firewall with confirmation | Enable firewall after allowing SSH |
+| Reload UFW | Reloads rules | Apply rule changes |
+| Fail2ban status | Shows jails/banned IPs | Inspect sshd jail |
+| Ban IP | Bans an address in a jail | Block attacker IP |
+| Unban IP | Removes a ban | Unblock trusted IP |
+
+## Users and SSH keys
+
+| Feature | What it does | Example |
+|---|---|---|
+| User list | Lists interactive accounts | Inventory admins |
+| Create user | Creates account/home/shell/password | Add `deploy` user |
+| Change password | Updates account password | Rotate credentials |
+| Delete user | Deletes account, optionally home | Remove old admin |
+| User detail | Shows UID/GID/groups/home/shell | Audit permissions |
+| SSH key list | Lists keys + fingerprints | Review authorized keys |
+| Add SSH key | Appends deduplicated public key | Add laptop key |
+| Delete SSH key | Removes key by index | Revoke old key |
 
 ## Network API
-- Public IP.
-- Interfaces, IPv4/IPv6/MAC, speed and counters.
-- Routes.
-- DNS resolvers.
-- Listening ports/process owners.
-- Active connections.
-- ARP/NDP neighbor table.
-- Short traffic sample with receive/transmit rate.
-- Ping with latency summary.
-- Traceroute.
-- DNS A lookup.
-- DNS records: A, AAAA, MX, TXT, NS, CNAME, SOA, SRV when supported.
-- TCP connect test.
-- HTTP status/latency check.
-- TLS certificate inspection including issuer/subject/expiry/days left.
-- Parsed `/etc/hosts`.
-- Public-IP geolocation/ASN/org/timezone.
-- Latency comparison to common public resolvers/providers.
-- Generate a self-signed TLS certificate/key with OpenSSL.
 
-## Git API
-- Repository status.
-- Commit history.
-- Fast-forward pull.
-- Checkout branch.
-- Clone repository.
-- List branches.
-- Diff (working tree or staged).
-- Push; force push requires extra confirmation.
+| Feature | What it does | Example |
+|---|---|---|
+| Public IP | Returns outbound public IPv4 | Check current egress IP |
+| Interfaces | IPv4/IPv6/MAC/speed/counters | Inventory NICs |
+| Routes | Kernel route table | Check gateway |
+| DNS | Resolver list | Diagnose DNS |
+| Listening ports | Ports + owning process | Security audit |
+| Connections | Active network connections | Connection monitoring |
+| ARP/neighbors | Neighbor table | Check gateway reachability |
+| Traffic sample | Measures RX/TX rate | Bandwidth graph |
+| Ping | ICMP test | Ping Cloudflare |
+| Traceroute | Route path test | Diagnose latency path |
+| DNS lookup | Resolves A records | Resolve a domain |
+| DNS records | A/AAAA/MX/TXT/NS/CNAME/SOA/SRV | Inspect mail DNS |
+| TCP check | Connects to host:port | Test database port |
+| HTTP check | Status + latency | Check website health |
+| TLS/SSL check | Reads certificate and expiry | Alert before certificate expires |
+| `/etc/hosts` | Parses local hosts file | Audit overrides |
+| GeoIP | Country/city/org/ASN | Identify server egress |
+| Multi-provider latency | Pings Google/Cloudflare/Quad9 | Compare internet latency |
+| Self-signed certificate | Generates a local TLS cert/key | Create temporary internal cert |
 
-## Cron API
-- Parse current crontab with human-readable meaning/next run.
-- Create task.
-- Update task atomically.
-- Delete task.
-- Run task immediately with captured output.
+## Git
 
-## Audit API
-- Full API audit trail.
-- Records API calls, denials, rate-limit events and mutating actions.
-- Filter by level/event/limit.
+| Feature | What it does | Example |
+|---|---|---|
+| Status | Shows working-tree changes | Check deployment modifications |
+| Log | Returns recent commits | Show deployed history |
+| Pull | Fast-forward pull | Update production |
+| Checkout | Switches branch | Change staging branch |
+| Clone | Clones HTTPS/SSH repo | Deploy a new app |
+| Branches | Lists local/remote branches | Build branch selector |
+| Diff | Returns patch/stat | Review changes |
+| Push | Pushes to remote, with protection around force | Publish server-side commit |
+
+## Cron and audit
+
+| Feature | What it does | Example |
+|---|---|---|
+| Cron list | Parses crontab and next run | Automation dashboard |
+| Add cron | Adds a scheduled command | Run backup every 10 minutes |
+| Update cron | Changes a scheduled command | Change timing |
+| Delete cron | Removes a task | Remove old job |
+| Run cron now | Executes immediately and captures output | Test before waiting |
+| Audit logs | Records API calls, denials, rate limits and mutations | Investigate automation activity |
 
 ---
 
-# Authentication and installation
+# What requires external Linux tools?
 
-- Apira VPS uses server-local authentication instead of the original external login backend.
-- Default administrator username: `admin`.
-- A random administrator password is generated during first installation and shown once.
-- Only a salted `scrypt` hash is stored in `/etc/apira-vps/auth.json`.
-- Default panel port: `789`.
-- Default install directory: `/opt/apira-vps`.
-- Automatic installer targets Debian/Ubuntu and installs/builds CPython 3.10 when needed.
-- The service is enabled through systemd and starts automatically after reboot.
+Some features only work when their underlying tools are installed.
+
+| Tool | Features that depend on it | Example |
+|---|---|---|
+| Docker | Containers, images, Compose, networks, volumes | OpsDeck/API Docker features |
+| Git | Repository management | Fetch/pull/checkout/diff |
+| GNU Screen or tmux | Session management | Background shell sessions |
+| UFW | Firewall API | Allow/deny ports |
+| Fail2ban | Ban/jail management | Block malicious IP |
+| traceroute | Traceroute diagnostics | Network path test |
+| Supervisor | Supervisor program controls | Restart supervised workers |
+| `dig` | Full DNS record queries | MX/TXT/SRV lookups |
+
+---
 
 # Important limitations
 
-- The main control engine and several extension engines are compiled CPython `.so` modules; their original pre-compilation Python source was not published upstream.
-- Linux x86_64 is required by the included compiled modules.
-- The core compiled extension requires CPython 3.10.
-- Several features are conditional on the related Linux CLI/service being installed.
-- The default deployment is plain HTTP on port 789. Put the panel behind HTTPS/reverse proxy and appropriate firewall rules before exposing it publicly.
-- Because the panel has highly privileged functionality, compromise of the panel account should be treated similarly to compromise of root/server administrator access.
+| Limitation | Meaning | Example |
+|---|---|---|
+| Linux x86_64 | Compiled modules target 64-bit Linux | ARM VPS is not supported by the included binaries |
+| CPython 3.10 core | Main compiled engine requires Python 3.10 ABI | Installer prepares Python 3.10 |
+| Debian/Ubuntu automation | Automatic dependency repair targets apt-based systems | Ubuntu 24.04 works through installer preparation |
+| Root-level power | The panel performs privileged operations | File/network/service changes affect the real server |
+| HTTPS is not built into port 789 | Default install is plain HTTP | Put the panel behind nginx/Caddy + TLS for public use |
+| Some internal historical IDs remain | Compiled compatibility identifiers cannot be blindly renamed | `vmtool.service`, `WeVPSControl`, some `WEVPS_*` names |
+| Compiled engines are not reconstructed source | `.so` modules are distributed binaries | UI/installers/wrappers are editable; compiled core source is not available |
 
-# Repository provenance
+---
 
-Original upstream project:
+# Authentication model
 
-`https://github.com/WEVPSAPI/VMTOOL`
+| Item | Current Apira VPS behavior | Example |
+|---|---|---|
+| Login backend | Local to the server | No `api.wevps.space` login dependency |
+| Credential file | `/etc/apira-vps/auth.json` | Local admin credential record |
+| Password storage | Salted `scrypt` hash | Plain password is not stored |
+| Default username | `admin` | Created on first install |
+| Initial password | Random strong password shown once during install | Save it immediately after installation |
 
-Apira VPS maintained distribution:
+---
 
-`https://github.com/Raha423/Raha423/tree/main/apira-vps`
+# Quick install
 
-Direct installer:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/install.sh | sudo bash
+```
 
-`curl -fsSL https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/install.sh | sudo bash`
+Then open:
 
-The original MIT license and copyright notice are preserved in `LICENSE`/`NOTICE.md`.
+```text
+http://YOUR_SERVER_IP:789/login
+```
+
+---
+
+# Repositories
+
+| Repository | Purpose |
+|---|---|
+| `Raha423/Raha423 → apira-vps` | Apira VPS maintained distribution, documentation, packages and installer |
+| `WEVPSAPI/VMTOOL` | Original upstream project used as the historical source of the MIT-licensed components |
+
+See `LICENSE` and `NOTICE.md` for attribution and licensing details.
