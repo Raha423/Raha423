@@ -1,7 +1,7 @@
 name: Publish Apira VPS source tree
 # Keeps the expanded source tree synchronized with the current published packages.
 # v2 i18n source sync
-# republish after Backup Center language settings patch
+# republish after Backup Center language settings and settings-target fix
 
 on:
   workflow_dispatch:
