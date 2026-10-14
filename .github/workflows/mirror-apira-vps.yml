@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '.github/workflows/mirror-apira-vps.yml'
+      - 'apira-vps/auth/**'
 
 permissions:
   contents: write
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download and brand upstream packages
+      - name: Download, brand and localize upstream packages
         run: |
           set -euxo pipefail
           rm -rf .mirror-work
@@ -25,37 +26,75 @@ jobs:
           done
           python3 - <<'PY'
           from pathlib import Path
-          import zipfile, shutil, re
-          root=Path('.mirror-work')
-          out=Path('apira-vps/Tools')
-          files=['WeVPSControl.zip','FileManager.zip','Terminal.zip','WEVPSNetwork.zip','BackupCenter.zip','WEVPSInstaller.zip','WEVPSOpsDeck.zip','ResourceSentinel.zip','WEVPSApiCore.zip']
-          text_ext={'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
+          import re, shutil, zipfile
+
+          root = Path('.mirror-work')
+          out = Path('apira-vps/Tools')
+          auth_dir = Path('apira-vps/auth')
+          files = ['WeVPSControl.zip','FileManager.zip','Terminal.zip','WEVPSNetwork.zip','BackupCenter.zip','WEVPSInstaller.zip','WEVPSOpsDeck.zip','ResourceSentinel.zip','WEVPSApiCore.zip']
+          text_ext = {'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
+
           for zname in files:
-              src=root/zname; d=root/(zname+'.d')
-              if d.exists(): shutil.rmtree(d)
+              src = root / zname
+              d = root / (zname + '.d')
+              if d.exists():
+                  shutil.rmtree(d)
               d.mkdir()
-              with zipfile.ZipFile(src) as z: z.extractall(d)
+              with zipfile.ZipFile(src) as z:
+                  z.extractall(d)
+
               for p in d.rglob('*'):
-                  if not p.is_file() or p.suffix.lower() not in text_ext: continue
-                  try: s=p.read_text(encoding='utf-8')
-                  except UnicodeDecodeError: continue
-                  t=s.replace('https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Notifications','https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications')
-                  t=re.sub(r'\bWeVPS\b','Apira VPS',t)
-                  t=re.sub(r'\bWEVPS\b','Apira VPS',t)
-                  if t!=s: p.write_text(t,encoding='utf-8')
+                  if not p.is_file() or p.suffix.lower() not in text_ext:
+                      continue
+                  try:
+                      s = p.read_text(encoding='utf-8')
+                  except UnicodeDecodeError:
+                      continue
+                  t = s.replace(
+                      'https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Notifications',
+                      'https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications',
+                  )
+                  t = re.sub(r'\bWeVPS\b', 'Apira VPS', t)
+                  t = re.sub(r'\bWEVPS\b', 'Apira VPS', t)
+                  if t != s:
+                      p.write_text(t, encoding='utf-8')
+
               if zname == 'WeVPSControl.zip':
                   for installer in d.rglob('install.sh'):
-                      s=installer.read_text(encoding='utf-8')
+                      control = installer.parent
+                      shutil.copy2(auth_dir / 'apira_auth.py', control / 'apira_auth.py')
+                      shutil.copy2(auth_dir / 'apira_entry.py', control / 'apira_entry.py')
+
+                      s = installer.read_text(encoding='utf-8')
+                      s = re.sub(r'^Environment=WEVPS_BACKEND_(?:MANIFEST_URL|URL|API_URL)=.*\n?', '', s, flags=re.M)
+                      s = s.replace(' vmtool:app', ' apira_entry:app')
+                      s = s.replace('import vmtool; print(', 'import apira_entry; print(')
+
                       if 'WEVPS_EXTENSIONS_MANIFEST_URL=' not in s:
-                          extra=('Environment=PYTHONUNBUFFERED=1\n'
-                                 'Environment=WEVPS_EXTENSIONS_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Extensions\n'
-                                 'Environment=WEVPS_BACKEND_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Backend\n')
-                          s=re.sub(r'Environment=PYTHONUNBUFFERED=1\r?\n',extra,s,count=1)
-                          installer.write_text(s,encoding='utf-8')
-              target=out/zname
-              with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as z:
+                          s = s.replace(
+                              'Environment=PYTHONUNBUFFERED=1\n',
+                              'Environment=PYTHONUNBUFFERED=1\n'
+                              'Environment=WEVPS_EXTENSIONS_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Extensions\n',
+                          )
+                      if 'APIRA_VPS_AUTH_FILE=' not in s:
+                          s = s.replace(
+                              'Environment=PYTHONUNBUFFERED=1\n',
+                              'Environment=PYTHONUNBUFFERED=1\n'
+                              'Environment=APIRA_VPS_AUTH_FILE=/etc/apira-vps/auth.json\n',
+                          )
+
+                      init_line = '"${CONTROL_DIR}/.venv/bin/python" "${CONTROL_DIR}/apira_auth.py" --init --file /etc/apira-vps/auth.json --username admin\n'
+                      req_line = '"${CONTROL_DIR}/.venv/bin/python" -m pip install -r "${CONTROL_DIR}/requirements.txt"\n'
+                      if 'apira_auth.py" --init' not in s:
+                          s = s.replace(req_line, req_line + '\n' + init_line)
+
+                      installer.write_text(s, encoding='utf-8')
+
+              target = out / zname
+              with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as z:
                   for p in sorted(d.rglob('*')):
-                      if p.is_file(): z.write(p,p.relative_to(d))
+                      if p.is_file():
+                          z.write(p, p.relative_to(d))
           PY
       - name: Commit mirrored packages
         run: |
@@ -65,6 +104,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No package changes.'
           else
-            git commit -m 'Mirror branded Apira VPS packages'
+            git commit -m 'Mirror standalone Apira VPS packages'
             git push
           fi
