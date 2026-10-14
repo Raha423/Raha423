@@ -80,6 +80,10 @@ jobs:
 
               for html in d.rglob('*.html'): inject_i18n(html)
 
+              if zname == 'BackupCenter.zip':
+                  backup_ui = next(d.rglob('BackupCenter/index.html'))
+                  subprocess.run([sys.executable, 'apira-vps/patches/backup_language_settings.py', str(backup_ui)], check=True)
+
               if zname == 'WeVPSControl.zip':
                   control_ui = next(d.rglob('ui/index.html'))
                   subprocess.run([sys.executable, 'apira-vps/patches/security_guides.py', str(control_ui)], check=True)
