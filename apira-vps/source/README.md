@@ -44,11 +44,11 @@ A strong random password is generated during the first installation and shown on
 - **Resource Sentinel** — CPU, RAM, disk, I/O, network, load and temperature monitoring with configurable alerts.
 - **API Core** — privileged REST API for system metrics, processes, systemd, files, terminal, Docker, network, firewall/fail2ban, Git, users and cron with API-key controls.
 
-### Complete capability guide
+### Capability Library
 
-The project has far more operations than the short list above. The complete module-by-module capability inventory — including network rollback, backups, Docker/Git/Cron/Screen operations, alerting and the full API Core surface — is documented here:
+The full documentation is organized as a catalog instead of a long article. Every module is split into tables with three columns: **Feature**, **What it does**, and **Example**.
 
-**[`docs/FEATURES.md` — Complete Apira VPS capability guide](docs/FEATURES.md)**
+**[`docs/FEATURES.md` — Open the Apira VPS Capability Library](docs/FEATURES.md)**
 
 ## Local authentication
 
