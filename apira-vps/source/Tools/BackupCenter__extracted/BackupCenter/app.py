@@ -214,14 +214,20 @@ def safe_sources(values: object) -> list[str]:
 def safe_excludes(values: object) -> list[str]:
     if values is None:
         return []
-    if not isinstance(values, list) or len(values) > 32:
-        raise ValueError("Excludes must be a list with at most 32 entries.")
-    result = []
+    if not isinstance(values, list):
+        raise ValueError("Excludes must be a list.")
+    result: list[str] = []
+    # APIRA_BACKUP_RELIABILITY_V1: accept comma, whitespace, semicolon and new-line pasted patterns.
     for raw in values:
-        value = str(raw or "").strip()
-        if not value or len(value) > 200 or "\x00" in value:
-            raise ValueError("Invalid exclusion pattern.")
-        result.append(value)
+        for value in re.split(r"[\s,;]+", str(raw or "").strip()):
+            if not value:
+                continue
+            if len(value) > 200 or "\x00" in value:
+                raise ValueError("Invalid exclusion pattern.")
+            if value not in result:
+                result.append(value)
+    if len(result) > 32:
+        raise ValueError("Excludes must contain at most 32 patterns.")
     return result
 
 
@@ -638,17 +644,19 @@ def backup_worker(
     try:
         if shutil.disk_usage(BACKUP_DIR).free < MIN_FREE_BYTES:
             raise RuntimeError("Backup stopped because less than 512 MB of local disk space is available.")
+        checked_members = 0
+        def archive_filter(info: tarfile.TarInfo):
+            nonlocal checked_members
+            checked_members += 1
+            if checked_members % 128 == 0 and shutil.disk_usage(BACKUP_DIR).free < MIN_FREE_BYTES:
+                raise RuntimeError("Backup stopped because less than 512 MB of local disk space is available.")
+            return None if excluded(Path(info.name), excludes) else info
+
         with tarfile.open(archive, "w:gz", compresslevel=6) as bundle:
             for source_text in sources:
                 source = Path(source_text)
                 arcname = str(source).lstrip("/")
-                bundle.add(
-                    source,
-                    arcname=arcname,
-                    recursive=True,
-                    filter=lambda info: None
-                    if excluded(Path(info.name), excludes) else info,
-                )
+                bundle.add(source, arcname=arcname, recursive=True, filter=archive_filter)
         archive.chmod(0o600)
         size = archive.stat().st_size
         digest = checksum(archive)
@@ -724,10 +732,39 @@ def validate_members(bundle: tarfile.TarFile) -> list[tarfile.TarInfo]:
     return members
 
 
+def recover_stale_running(now: int | None = None) -> None:
+    """Recover orphaned jobs left behind if a web worker dies mid-archive."""
+    now = int(now or time.time())
+    stale_before = now - 15 * 60
+    recovered: list[str] = []
+    with database() as connection:
+        rows = connection.execute(
+            "SELECT id,created_at FROM backups WHERE status='running' AND created_at<=?",
+            (stale_before,),
+        ).fetchall()
+        for row in rows:
+            archive = BACKUP_DIR / f"{row['id']}.tar.gz"
+            if archive.exists():
+                try:
+                    if now - int(archive.stat().st_mtime) < 5 * 60:
+                        continue
+                except OSError:
+                    continue
+                archive.unlink(missing_ok=True)
+            connection.execute(
+                "UPDATE backups SET status='failed',completed_at=?,size=0,path=NULL,checksum=NULL,error=? WHERE id=?",
+                (now, "Interrupted: backup worker stopped unexpectedly; incomplete archive removed.", row['id']),
+            )
+            recovered.append(row['id'])
+    for backup_id in recovered:
+        event("error", "backup_interrupted", backup_id)
+
+
 def scheduler_loop() -> None:
     while True:
         try:
             now = int(time.time())
+            recover_stale_running(now)
             due = []
             with database() as connection:
                 connection.execute("BEGIN IMMEDIATE")

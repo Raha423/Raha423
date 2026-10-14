@@ -482,11 +482,11 @@
         if ($("#email").checked) targets.push("email");
         if ($("#cloudStorage").checked) targets.push("s3");
         const delivery = targets.length ? targets.join(",") : "none";
-        const excludes = ($("#excludePatterns")?.value || "").split(",").map(x=>x.trim()).filter(Boolean);
+        const excludes = ($("#excludePatterns")?.value || "").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean);
         const [hour, minute] = $("#scheduleTime").value.split(":").map(Number);
         const first = new Date(); first.setHours(hour, minute, 0, 0); if (first <= new Date()) first.setDate(first.getDate() + 1);
         try {
-            await api("/api/schedules",{method:"POST",headers:{"Content-Type":"application/json","X-Requested-With":"XMLHttpRequest"},body:JSON.stringify({name,sources:source.split(",").map(x=>x.trim()).filter(Boolean),excludes,interval_hours:interval,retention,delivery,first_run:Math.floor(first.getTime()/1000)})});
+            await api("/api/schedules",{method:"POST",headers:{"Content-Type":"application/json","X-Requested-With":"XMLHttpRequest"},body:JSON.stringify({name,sources:source.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean),excludes,interval_hours:interval,retention,delivery,first_run:Math.floor(first.getTime()/1000)})});
             closeModal(); toast("Backup job created","The automation policy is active."); navigateTo("jobs");
         } catch (error) { toast("Unable to create job",error.message,"error"); }
     };
