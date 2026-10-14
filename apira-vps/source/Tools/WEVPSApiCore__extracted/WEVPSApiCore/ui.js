@@ -157,13 +157,15 @@
         set("#dashReq", fmtNum(data.counts.requests_24h));
         set("#dashDenied", fmtNum(data.counts.denied_24h));
         set("#dashUptime", fmtUptime(data.server?.uptime_seconds));
-        setBaseUrl(data.base_url.replace(/\/api\/v1$/, "") + "/api/v1");
-        renderCurlSample(data.base_url);
+        // APIRA_API_CORE_PUBLIC_URL_V1: use the URL the user actually opened, not backend localhost.
+        const browserBaseUrl = `${location.origin}${mount}api/v1`.replace(/\/$/, "");
+        setBaseUrl(browserBaseUrl);
+        renderCurlSample(browserBaseUrl);
         if (data.recent_events) renderFeed(data.recent_events);
     }
     function renderCurlSample(baseUrl) {
         $("#curlSample").textContent =
-            `curl -X GET "${baseUrl}/api/v1/system" \\\n` +
+            `curl -X GET "${baseUrl}/system" \\\n` +
             `  -H "Authorization: Bearer wac_xxxxxxxxxxxxxxxx"`;
     }
     function renderFeed(events) {
