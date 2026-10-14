@@ -363,7 +363,7 @@
         box.classList.add("show");
     }
     async function loadSettings() {
-        const body = $("#settings .panel-body");
+        const body = $("#settingsBody");
         body.style.visibility = "visible";
         body.innerHTML = `<div class="empty-state is-loading"><div class="empty-icon"><i data-lucide="loader-circle"></i></div><h3>Loading destination settings</h3><p>Securely retrieving your saved destination configuration.</p></div>`;
         drawIcons(body);
