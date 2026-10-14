@@ -25,56 +25,13 @@ jobs:
           done
           python3 - <<'PY'
           from pathlib import Path
-          import zipfile, shutil
+          import zipfile, shutil, re
           root=Path('.mirror-work')
           out=Path('apira-vps/Tools')
           files=['WeVPSControl.zip','FileManager.zip','Terminal.zip','WEVPSNetwork.zip','BackupCenter.zip','WEVPSInstaller.zip','WEVPSOpsDeck.zip','ResourceSentinel.zip','WEVPSApiCore.zip']
           text_ext={'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
-          replacements=[
-              ('https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Notifications','https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications'),
-              ('Sign in · WeVPS','Sign in · Apira VPS'),
-              ('File Manager · WeVPS','File Manager · Apira VPS'),
-              ('WeVPS File Manager','Apira VPS File Manager'),
-              ('WeVPS tools center','Apira VPS tools center'),
-              ('Synced directly from the WeVPS GitHub repository.','Synced directly from the Apira VPS GitHub repository.'),
-              ('The main WeVPS session key is unavailable.','The main Apira VPS session key is unavailable.'),
-              ('main WeVPS login','main Apira VPS login'),
-              ('WeVPS Control Panel','Apira VPS'),
-              ('WeVPS Control Center','Apira VPS'),
-              ('WeVPS Control','Apira VPS'),
-              ('WeVPS Terminal','Apira VPS Terminal'),
-              ('WEVPS Network','Apira VPS Network'),
-              ('WEVPS Installer','Apira VPS Installer'),
-              ('WEVPS OpsDeck','Apira VPS OpsDeck'),
-              ('WEVPS ApiCore','Apira VPS ApiCore'),
-              ('WEVPS Backup Center','Apira VPS Backup Center'),
-              ('WEVPS Resource Sentinel','Apira VPS Resource Sentinel'),
-              ('WEVPS <span>','Apira VPS <span>'),
-              ('WEVPS<span>','Apira VPS<span>'),
-              ('WeVPS <span>','Apira VPS <span>'),
-              ('Built by <b>WEVPS</b>','Built by <b>Apira VPS</b>'),
-              ('<strong>WEVPS</strong>','<strong>Apira VPS</strong>'),
-              ('Built by WeVPS','Built by Apira VPS'),
-              ('Built by WEVPS','Built by Apira VPS'),
-              ('maintained by WEVPS','maintained by Apira VPS'),
-              ('maintained by WeVPS','maintained by Apira VPS'),
-              ('Your WeVPS session','Your Apira VPS session'),
-              ('Shared WeVPS session','Shared Apira VPS session'),
-              ('WeVPS API','Apira VPS API'),
-              ('WeVPS agent','Apira VPS agent'),
-              ('WeVPS extension','Apira VPS extension'),
-              ('WeVPS notification','Apira VPS notification'),
-              ('WeVPS updates','Apira VPS updates'),
-              ('from WeVPS','from Apira VPS'),
-              ('The WeVPS service','The Apira VPS service'),
-              ('WEVPS backup completed','Apira VPS backup completed'),
-              ('WEVPS Backup completed','Apira VPS Backup completed'),
-              ('WEVPS Backup Center connected','Apira VPS Backup Center connected'),
-              ('VMTool is not active','Apira VPS is not active'),
-          ]
           for zname in files:
-              src=root/zname
-              d=root/(zname+'.d')
+              src=root/zname; d=root/(zname+'.d')
               if d.exists(): shutil.rmtree(d)
               d.mkdir()
               with zipfile.ZipFile(src) as z: z.extractall(d)
@@ -82,20 +39,18 @@ jobs:
                   if not p.is_file() or p.suffix.lower() not in text_ext: continue
                   try: s=p.read_text(encoding='utf-8')
                   except UnicodeDecodeError: continue
-                  t=s
-                  for a,b in replacements: t=t.replace(a,b)
+                  t=s.replace('https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Notifications','https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications')
+                  t=re.sub(r'\bWeVPS\b','Apira VPS',t)
+                  t=re.sub(r'\bWEVPS\b','Apira VPS',t)
                   if t!=s: p.write_text(t,encoding='utf-8')
               if zname == 'WeVPSControl.zip':
                   for installer in d.rglob('install.sh'):
                       s=installer.read_text(encoding='utf-8')
-                      marker='Environment=PYTHONUNBUFFERED=1\n'
-                      extra=(
-                          'Environment=PYTHONUNBUFFERED=1\n'
-                          'Environment=WEVPS_EXTENSIONS_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Extensions\n'
-                          'Environment=WEVPS_BACKEND_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Backend\n'
-                      )
                       if 'WEVPS_EXTENSIONS_MANIFEST_URL=' not in s:
-                          s=s.replace(marker,extra)
+                          extra=('Environment=PYTHONUNBUFFERED=1\n'
+                                 'Environment=WEVPS_EXTENSIONS_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Extensions\n'
+                                 'Environment=WEVPS_BACKEND_MANIFEST_URL=https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Backend\n')
+                          s=re.sub(r'Environment=PYTHONUNBUFFERED=1\r?\n',extra,s,count=1)
                           installer.write_text(s,encoding='utf-8')
               target=out/zname
               with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as z:
