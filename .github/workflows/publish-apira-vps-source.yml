@@ -1,5 +1,6 @@
 name: Publish Apira VPS source tree
 # Keeps the expanded source tree synchronized with the current published packages.
+# v2 i18n source sync
 
 on:
   workflow_dispatch:
@@ -67,6 +68,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'Source tree is already up to date.'
           else
-            git commit -m 'Publish localized Apira VPS source tree'
+            git commit -m 'Publish optimized bilingual Apira VPS source tree'
             git push
           fi
