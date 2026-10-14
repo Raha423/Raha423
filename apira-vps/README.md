@@ -54,6 +54,22 @@ apira-vps/i18n/apira-fa.json
 
 The package publishing workflow embeds these resources directly into the HTML of every published tool, so Persian support does not depend on an external translation service or a separate static-file route.
 
+## Interactive Security Guides
+
+Security recommendations in the **Security Center** are interactive. Supported cards open a structured guide instead of acting as display-only warnings.
+
+Each guide contains an explanation, safety notes, numbered steps, command blocks, one-tap **Copy** buttons and a verification step. The firewall guide also reads the live SSH port from the server before generating the UFW command, so it does not assume port 22.
+
+Current interactive guides cover:
+
+- Host firewall / UFW setup
+- Direct root SSH login restrictions
+- SSH password authentication
+- Security package updates
+- Failed and successful SSH login review
+
+See **[`docs/SECURITY-GUIDES.md`](docs/SECURITY-GUIDES.md)** for the full guide behavior and safety model.
+
 ## Included modules
 
 - **Apira VPS Control** — dashboard, CPU/RAM/disk/network information, system details, processes, services, logs and security overview.
@@ -107,10 +123,12 @@ apira-vps/
 ├── Extensions
 ├── Notifications
 ├── i18n/               # English/Persian localization resources
+├── patches/            # maintained UI/runtime patches
 ├── Tools/              # installable packages
 ├── source/             # expanded project files
 └── docs/
-    └── FEATURES.md
+    ├── FEATURES.md
+    └── SECURITY-GUIDES.md
 ```
 
 The `source/` directory is automatically generated from the published packages so the project structure and readable files can be inspected directly on GitHub.
