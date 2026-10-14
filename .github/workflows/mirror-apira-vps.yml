@@ -56,6 +56,7 @@ jobs:
                   )
                   t = re.sub(r'\bWeVPS\b', 'Apira VPS', t)
                   t = re.sub(r'\bWEVPS\b', 'Apira VPS', t)
+                  t = t.replace('wevps-network-', 'apira-vps-network-')
                   if t != s:
                       p.write_text(t, encoding='utf-8')
 
