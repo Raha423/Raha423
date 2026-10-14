@@ -26,13 +26,38 @@ BLOCK = '''
 '''
 NEEDLE = '''                <section class="panel">\n                    <div class="panel-header">\n                        <div>\n                            <div class="panel-title">Destination configuration</div>'''
 
-def patch(path: Path) -> None:
+OLD_SELECTOR = 'const body = $("#settings .panel-body");'
+NEW_SELECTOR = 'const body = $("#settingsBody");'
+OLD_JS_URL = 'ui.js?v=1.0.0-final'
+NEW_JS_URL = 'ui.js?v=1.0.0-apira-langfix2'
+
+
+def patch_index(path: Path) -> None:
     s = path.read_text(encoding='utf-8')
-    if MARKER in s:
-        return
-    if NEEDLE not in s:
-        raise SystemExit(f'Backup Center settings anchor not found: {path}')
-    path.write_text(s.replace(NEEDLE, BLOCK + '\n' + NEEDLE, 1), encoding='utf-8')
+    if MARKER not in s:
+        if NEEDLE not in s:
+            raise SystemExit(f'Backup Center settings anchor not found: {path}')
+        s = s.replace(NEEDLE, BLOCK + '\n' + NEEDLE, 1)
+    if OLD_JS_URL in s:
+        s = s.replace(OLD_JS_URL, NEW_JS_URL, 1)
+    path.write_text(s, encoding='utf-8')
+
+
+def patch_ui_js(path: Path) -> None:
+    if not path.exists():
+        raise SystemExit(f'Backup Center ui.js not found: {path}')
+    s = path.read_text(encoding='utf-8')
+    if OLD_SELECTOR in s:
+        s = s.replace(OLD_SELECTOR, NEW_SELECTOR, 1)
+    elif NEW_SELECTOR not in s:
+        raise SystemExit(f'Backup Center settings selector not found: {path}')
+    path.write_text(s, encoding='utf-8')
+
+
+def patch(path: Path) -> None:
+    patch_index(path)
+    patch_ui_js(path.with_name('ui.js'))
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
