@@ -3534,16 +3534,45 @@
                 window.scrollTo({ top: 0, behavior: "smooth" }); refreshIcons(); if (pageId === "overview") setTimeout(() => { drawChart(); drawTrafficChart(); }, 50);
             }
 
+            // APIRA_TOOLS_REFRESH_RETRY_V1
             async function loadTools({ silent = false } = {}) {
                 try {
                     const data = await fetchJson(API.tools);
                     state.tools = Array.isArray(data) ? data : (Array.isArray(data.tools) ? data.tools : []);
                     renderTools();
+                    return true;
                 } catch (error) {
-                    state.tools = [];
-                    renderTools();
-                    if (!silent) toast("Tools error", "Could not load tools from the API.", "error");
+                    // Extension install/remove can restart Gunicorn for a few seconds.
+                    // Preserve the last known cards during that brief reconnect window.
+                    if (!silent) {
+                        state.tools = [];
+                        renderTools();
+                        toast("Tools error", "Could not load tools from the API.", "error");
+                    }
+                    return false;
                 }
+            }
+
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function refreshToolsUntilSettled(name, action, attempts = 12) {
+                for (let attempt = 0; attempt < attempts; attempt += 1) {
+                    try {
+                        const data = await fetchJson(API.tools);
+                        const tools = Array.isArray(data) ? data : (Array.isArray(data.tools) ? data.tools : []);
+                        const tool = tools.find(item => String(item.name || "").toLowerCase() === String(name || "").toLowerCase());
+                        const settled = action === "remove" ? !tool?.installed : Boolean(tool?.installed);
+                        if (settled) {
+                            state.tools = tools;
+                            renderTools();
+                            return true;
+                        }
+                    } catch (_) {
+                        // Expected briefly while the service reloads extension mounts.
+                    }
+                    await sleep(Math.min(700 + attempt * 200, 1800));
+                }
+                return loadTools({ silent: true });
             }
 
             function renderTools() {
@@ -3622,9 +3651,16 @@
                     const data = await response.json().catch(() => ({}));
                     if (!response.ok || data.success === false) throw new Error(data.message || `HTTP ${response.status}`);
                     toast("Extensions", data.message || `${name} ${action} completed`, "success");
-                    await loadTools({ silent: true });
+                    const refreshed = await refreshToolsUntilSettled(name, action);
+                    if (!refreshed) toast("Extensions", "The operation completed, but status refresh is still reconnecting. Tap refresh once.", "warning");
                 } catch (error) {
-                    toast("Extension error", error.message || "Operation failed", "error");
+                    const message = String(error?.message || "Operation failed");
+                    if (/already installed/i.test(message)) {
+                        toast("Extensions", `${name} is already installed. Refreshing status...`, "success");
+                        await refreshToolsUntilSettled(name, "install");
+                        return;
+                    }
+                    toast("Extension error", message, "error");
                     button.disabled = false;
                     button.innerHTML = original;
                     refreshIcons();
