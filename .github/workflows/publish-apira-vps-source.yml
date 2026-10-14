@@ -1,4 +1,5 @@
 name: Publish Apira VPS source tree
+# Keeps the expanded source tree synchronized with the current published packages.
 
 on:
   workflow_dispatch:
