@@ -28,14 +28,18 @@ jobs:
           done
           python3 - <<'PY'
           from pathlib import Path
-          import re, shutil, zipfile, subprocess, sys
+          import re, shutil, zipfile, subprocess, sys, json
 
           root = Path('.mirror-work')
           out = Path('apira-vps/Tools')
           auth_dir = Path('apira-vps/auth')
           i18n_dir = Path('apira-vps/i18n')
           i18n_js = (i18n_dir / 'apira-i18n-v2.js').read_text(encoding='utf-8').replace('</script', '<\\/script')
-          i18n_fa = (i18n_dir / 'apira-fa.json').read_text(encoding='utf-8').replace('</script', '<\\/script')
+          fa_messages = json.loads((i18n_dir / 'apira-fa.json').read_text(encoding='utf-8'))
+          extra_path = i18n_dir / 'apira-fa-extra.json'
+          if extra_path.exists():
+              fa_messages.update(json.loads(extra_path.read_text(encoding='utf-8')))
+          i18n_fa = json.dumps(fa_messages, ensure_ascii=False, separators=(',', ':')).replace('</script', '<\\/script')
           files = ['WeVPSControl.zip','FileManager.zip','Terminal.zip','WEVPSNetwork.zip','BackupCenter.zip','WEVPSInstaller.zip','WEVPSOpsDeck.zip','ResourceSentinel.zip','WEVPSApiCore.zip']
           text_ext = {'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
 
