@@ -1,7 +1,7 @@
 name: Publish Apira VPS source tree
 # Keeps the expanded source tree synchronized with the current published packages.
 # v2 i18n source sync
-# republish after full tools audit, reliability, API Core URL and Network timeout fixes
+# republish after full tools audit, reliability, API Core, Network and Tools Center fixes
 
 on:
   workflow_dispatch:
