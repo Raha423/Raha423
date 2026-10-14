@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "mode": "local",
+  "provider": "apira-vps",
+  "description": "Apira VPS uses server-local authentication; no external authentication backend is required."
+}

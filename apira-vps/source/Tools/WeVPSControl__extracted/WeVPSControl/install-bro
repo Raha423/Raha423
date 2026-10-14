@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONTROL_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "$(uname -s)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
+  echo "This WeVPS Control build requires Linux x86_64." >&2
+  exit 1
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo -E bash "${BASH_SOURCE[0]}" "$@"
+  fi
+  echo "Run as root: sudo bash install-bro" >&2
+  exit 1
+fi
+
+chmod 755 "${CONTROL_DIR}/install.sh"
+[[ -f "${CONTROL_DIR}/build-linux.sh" ]] && chmod 755 "${CONTROL_DIR}/build-linux.sh"
+
+if ! command -v apt-get >/dev/null 2>&1; then
+  echo "Automatic dependency repair currently supports Debian and Ubuntu." >&2
+  exit 1
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y \
+  ca-certificates curl build-essential pkg-config \
+  libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
+  libffi-dev liblzma-dev tk-dev uuid-dev
+
+find_python310() {
+  if command -v python3.10 >/dev/null 2>&1; then
+    command -v python3.10
+    return 0
+  fi
+  for candidate in /usr/local/bin/python3.10 /opt/python3.10/bin/python3.10; do
+    if [[ -x "${candidate}" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+PYTHON_BIN="$(find_python310 || true)"
+
+if [[ -z "${PYTHON_BIN}" ]]; then
+  apt-get install -y python3.10 python3.10-venv python3.10-dev 2>/dev/null || true
+  PYTHON_BIN="$(find_python310 || true)"
+fi
+
+if [[ -z "${PYTHON_BIN}" && -f /etc/os-release ]]; then
+  # Ubuntu releases that do not ship Python 3.10 can use Deadsnakes.
+  . /etc/os-release
+  if [[ "${ID:-}" == "ubuntu" ]]; then
+    apt-get install -y software-properties-common
+    add-apt-repository -y ppa:deadsnakes/ppa
+    apt-get update
+    apt-get install -y python3.10 python3.10-venv python3.10-dev
+    PYTHON_BIN="$(find_python310 || true)"
+  fi
+fi
+
+if [[ -z "${PYTHON_BIN}" ]]; then
+  echo "Python 3.10 package was unavailable; building a private runtime..."
+  PYTHON_VERSION="3.10.16"
+  SOURCE_DIR="$(mktemp -d -t python310-build.XXXXXX)"
+  trap 'rm -rf "${SOURCE_DIR}"' EXIT
+  curl --fail --location --retry 3 \
+    "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz" \
+    --output "${SOURCE_DIR}/python.tgz"
+  tar -xzf "${SOURCE_DIR}/python.tgz" -C "${SOURCE_DIR}"
+  cd "${SOURCE_DIR}/Python-${PYTHON_VERSION}"
+  ./configure --prefix=/opt/python3.10 --with-ensurepip=install
+  make -j"$(nproc)"
+  make altinstall
+  PYTHON_BIN="/opt/python3.10/bin/python3.10"
+fi
+
+VENV_TEST_DIR="$(mktemp -d -t python310-venv-test.XXXXXX)"
+if ! "${PYTHON_BIN}" -m venv "${VENV_TEST_DIR}/venv" >/dev/null 2>&1; then
+  rm -rf -- "${VENV_TEST_DIR}"
+  apt-get install -y python3.10-venv 2>/dev/null || true
+  VENV_TEST_DIR="$(mktemp -d -t python310-venv-test.XXXXXX)"
+  if ! "${PYTHON_BIN}" -m venv "${VENV_TEST_DIR}/venv" >/dev/null 2>&1; then
+    rm -rf -- "${VENV_TEST_DIR}"
+    echo "Python 3.10 venv/ensurepip support is still unavailable." >&2
+    exit 1
+  fi
+fi
+rm -rf -- "${VENV_TEST_DIR}"
+
+# Remove only the local, incomplete environment left by a failed install.
+if [[ -d "${CONTROL_DIR}/.venv" ]]; then
+  rm -rf -- "${CONTROL_DIR}/.venv"
+fi
+
+cd "${CONTROL_DIR}"
+echo "Using: $(${PYTHON_BIN} --version) at ${PYTHON_BIN}"
+PYTHON_BIN="${PYTHON_BIN}" "${CONTROL_DIR}/install.sh"

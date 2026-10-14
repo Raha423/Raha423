@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080a12">
+    <title>Apira VPS ApiCore - REST gateway</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg: #070811;
+            --border: rgba(255, 255, 255, .075);
+            --border-strong: rgba(154, 128, 255, .3);
+            --text: #f8f8fc;
+            --muted: #939aad;
+            --purple: #8065ff;
+            --radius: 18px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            min-height: 100vh;
+            color: var(--text);
+            background:
+                radial-gradient(1000px 560px at 70% -16%, rgba(128, 101, 255, .2), transparent 62%),
+                radial-gradient(700px 480px at 4% 104%, rgba(59, 130, 246, .07), transparent 66%),
+                #070811;
+            font-family: "Manrope", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button, input, select { font: inherit; color: inherit; }
+        ::selection { background: var(--purple); color: white; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { border: 2px solid #090a13; border-radius: 20px; background: linear-gradient(#453e66, #2b2740); }
+
+        .app { display: grid; grid-template-columns: 265px minmax(0, 1fr); min-height: 100vh; }
+
+        .sidebar {
+            position: fixed; z-index: 50; inset: 0 auto 0 0; width: 265px;
+            display: flex; flex-direction: column; padding: 24px 16px;
+            border-right: 1px solid rgba(255,255,255,.07);
+            background: radial-gradient(circle at 30% 0, rgba(128,101,255,.1), transparent 28%), rgba(10,11,20,.92);
+            backdrop-filter: blur(24px);
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; padding: 0 9px 30px; }
+
+        .brand-mark {
+            width: 42px; height: 42px; display: grid; place-items: center;
+            border: 1px solid rgba(255,255,255,.16); border-radius: 14px;
+            background: linear-gradient(145deg, #9a84ff, #7354ee 52%, #5031ba);
+            box-shadow: 0 14px 38px rgba(100,70,225,.4), inset 0 1px rgba(255,255,255,.24);
+        }
+        .brand-mark svg { width: 20px; height: 20px; color: white; }
+
+        .brand-title { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -.045em; }
+        .brand-title span { color: #b9abff; }
+        .brand-subtitle { margin-top: 3px; color: #7f879e; font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+
+        .nav-label { margin: 10px 12px 8px; color: #5e657d; font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+        .nav { display: grid; gap: 6px; }
+
+        .nav-item {
+            position: relative; width: 100%; min-height: 45px; display: flex; align-items: center; gap: 12px;
+            padding: 0 13px; border: 1px solid transparent; border-radius: 12px;
+            color: #9299ac; background: transparent; font-size: 13px; font-weight: 700; text-align: left;
+            cursor: pointer; transition: .2s ease;
+        }
+        .nav-item:hover { color: #eeeff6; background: rgba(255,255,255,.04); }
+        .nav-item.active {
+            color: #fff; border-color: rgba(157,133,255,.2);
+            background: linear-gradient(90deg, rgba(128,101,255,.24), rgba(128,101,255,.06));
+        }
+        .nav-item.active::before {
+            position: absolute; left: -16px; width: 3px; height: 24px; content: "";
+            border-radius: 0 5px 5px 0; background: linear-gradient(#b8a9ff, #7659ef);
+        }
+        .nav-item i, .nav-item svg { width: 18px; height: 18px; stroke-width: 1.9; }
+
+        .sidebar-bottom { margin-top: auto; display: grid; gap: 12px; }
+
+        .base-card {
+            padding: 14px 15px; border: 1px solid var(--border); border-radius: 15px;
+            background: radial-gradient(circle at 85% 0, rgba(124,92,255,.13), transparent 42%), rgba(255,255,255,.025);
+        }
+        .base-card span { display: block; color: #777f94; font-size: 8.5px; font-weight: 800; letter-spacing: .09em; }
+        .base-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+        .base-actions span { margin-bottom: 0; }
+        .base-card code {
+            display: block; word-break: break-all; line-height: 1.6;
+            color: #c9c0ff; font-family: ui-monospace, Consolas, monospace; font-size: 9.5px; cursor: pointer;
+        }
+        .base-card code:hover { color: #e4ddff; }
+        .icon-btn.base-copy { width: 26px; height: 26px; border-radius: 8px; flex: none; }
+        .icon-btn.base-copy svg { width: 13px; height: 13px; }
+
+        .main { grid-column: 2; min-width: 0; padding: 28px 34px 64px; }
+
+        .topbar {
+            position: sticky; z-index: 40; top: 0; display: flex; align-items: center; gap: 14px;
+            min-height: 76px; margin: -28px -34px 30px; padding: 14px 34px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            background: linear-gradient(180deg, rgba(8,10,19,.92), rgba(8,10,19,.7)); backdrop-filter: blur(24px);
+        }
+        .menu-btn { display: none; }
+        .top-actions { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+
+        .icon-btn {
+            width: 40px; height: 40px; display: grid; place-items: center;
+            border: 1px solid rgba(255,255,255,.075); border-radius: 12px;
+            background: rgba(255,255,255,.032); cursor: pointer; transition: .2s ease;
+        }
+        .icon-btn:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+
+        .primary-btn, .secondary-btn, .ghost-btn {
+            height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 0 15px; border-radius: 12px; font-size: 12px; font-weight: 750; cursor: pointer; transition: .18s ease;
+        }
+        .primary-btn {
+            min-height: 43px; padding-inline: 17px; border: 1px solid rgba(255,255,255,.15); color: white;
+            background: linear-gradient(145deg, #9178ff, #7252ed 58%, #5e3cd1);
+            box-shadow: 0 13px 34px rgba(91,61,210,.32), inset 0 1px rgba(255,255,255,.22);
+        }
+        .primary-btn:hover { transform: translateY(-2px); }
+        .secondary-btn { border: 1px solid var(--border); color: #d7d2f4; background: rgba(255,255,255,.035); }
+        .secondary-btn:hover { background: rgba(255,255,255,.08); }
+        .ghost-btn { min-height: 32px; padding-inline: 10px; border: 1px solid transparent; color: var(--muted); background: transparent; }
+        .ghost-btn:hover { color: #d8d3f5; border-color: rgba(167,139,250,.16); background: rgba(124,92,255,.07); }
+        .primary-btn i, .secondary-btn i, .ghost-btn i, .run-btn i { width: 15px; }
+
+        .page { display: none; max-width: 1400px; margin-inline: auto; animation: pageIn .32s ease; }
+        .page.active { display: block; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        .page-header {
+            position: relative; display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 16px; margin-bottom: 26px; padding-bottom: 4px;
+        }
+        .page-header::after {
+            position: absolute; inset: auto 0 -12px 0; height: 1px; content: "";
+            background: linear-gradient(90deg, rgba(167,139,250,.22), rgba(255,255,255,.045) 42%, transparent);
+        }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 7px; margin-bottom: 9px; padding: 5px 9px;
+            border: 1px solid rgba(139,124,255,.18); border-radius: 999px; color: #ad9cff;
+            background: linear-gradient(90deg, rgba(128,101,255,.11), rgba(128,101,255,.03));
+            font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase;
+        }
+        h1 {
+            font-size: clamp(28px, 3.2vw, 39px); font-weight: 800; line-height: 1.08; letter-spacing: -.052em;
+            background: linear-gradient(112deg, #fff 12%, #e8e5ff 52%, #a995ff 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .page-description { max-width: 660px; margin-top: 10px; color: #9ca3b5; font-size: 13px; line-height: 1.75; }
+
+        .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+
+        .stat-card {
+            position: relative; overflow: hidden; isolation: isolate; min-height: 132px; padding: 19px;
+            border: 1px solid rgba(255,255,255,.08); border-radius: 18px;
+            background: linear-gradient(150deg, rgba(255,255,255,.047), transparent 46%), rgba(15,17,29,.72);
+            box-shadow: inset 0 1px rgba(255,255,255,.035), 0 20px 55px rgba(0,0,0,.17);
+        }
+        .stat-card::before {
+            position: absolute; inset: 0 0 auto 0; height: 2px; content: "";
+            background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color) 78%, white), transparent);
+        }
+        .stat-top { display: flex; align-items: center; justify-content: space-between; }
+        .stat-icon {
+            width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px;
+            border: 1px solid color-mix(in srgb, var(--color) 20%, transparent); color: var(--color);
+            background: color-mix(in srgb, var(--color) 13%, transparent);
+        }
+        .stat-value { margin-top: 15px; font-size: 26px; font-weight: 800; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+        .stat-label { margin-top: 6px; color: #969db1; font-size: 11px; font-weight: 600; }
+
+        .panel {
+            overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius);
+            background: linear-gradient(150deg, rgba(255,255,255,.047), transparent 46%), rgba(15,17,29,.76);
+            box-shadow: inset 0 1px rgba(255,255,255,.035), 0 20px 55px rgba(0,0,0,.17);
+        }
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            min-height: 64px; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,.065);
+            background: linear-gradient(90deg, rgba(128,101,255,.04), transparent 42%);
+        }
+        .panel-title { color: #f5f5fa; font-size: 14px; font-weight: 800; letter-spacing: -.025em; }
+        .panel-subtitle { margin-top: 4px; color: #979fb6; font-size: 11px; }
+
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; min-width: 900px; border-collapse: collapse; white-space: nowrap; }
+        th {
+            padding: 13px 16px; color: #8b92a6; background: rgba(255,255,255,.02);
+            font-size: 9px; font-weight: 800; letter-spacing: .09em; text-align: left; text-transform: uppercase;
+        }
+        td { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.055); color: #e3e5ef; font-size: 11px; vertical-align: middle; }
+        tbody tr { transition: .18s ease; }
+        tbody tr:hover { background: rgba(128,101,255,.05); box-shadow: inset 3px 0 #8065ff; }
+
+        .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius: 8px; font-size: 9px; font-weight: 800; }
+        .status.success { color: #62dc8a; background: rgba(34,197,94,.09); }
+        .status.paused { color: #fbbf58; background: rgba(245,158,11,.1); }
+
+        .scope-chip {
+            display: inline-block; padding: 3px 7px; margin: 2px 3px 2px 0;
+            border: 1px solid rgba(139,124,255,.22); border-radius: 6px;
+            color: #c3b8ff; background: rgba(124,92,255,.09); font-family: ui-monospace, Consolas, monospace; font-size: 8.5px;
+        }
+
+        .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+
+        .run-btn {
+            min-height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 0 11px; border: 1px solid rgba(139,92,246,.25); border-radius: 9px;
+            color: #c7b7ff; background: rgba(139,92,246,.09); font-size: 10px; font-weight: 700; cursor: pointer; transition: .18s ease;
+        }
+        .run-btn:hover { transform: translateY(-1px); background: rgba(139,92,246,.17); }
+        .run-btn svg { width: 11px; height: 11px; }
+        .danger-action { color: #ff9caa; border-color: rgba(244,63,94,.25); }
+        .danger-action:hover { color: #fff; border-color: rgba(244,63,94,.52); background: rgba(244,63,94,.22); }
+        .green-action { color: #7ce8a4; border-color: rgba(34,197,94,.28); }
+        .green-action:hover { color: #d9ffe8; border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.14); }
+        .table-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        /* Docs */
+
+        .docs-hero {
+            position: relative; overflow: hidden; padding: 28px; margin-bottom: 18px;
+            border: 1px solid rgba(151,125,255,.24); border-radius: 20px;
+            background: radial-gradient(circle at 91% 10%, rgba(128,101,255,.25), transparent 38%),
+                        linear-gradient(135deg, rgba(128,101,255,.12), rgba(13,15,27,.85) 55%);
+            box-shadow: inset 0 1px rgba(255,255,255,.06), 0 30px 85px rgba(0,0,0,.24);
+        }
+        .docs-hero h2 { max-width: 640px; font-size: clamp(21px, 2.4vw, 28px); font-weight: 800; letter-spacing: -.04em; line-height: 1.2; }
+        .docs-hero p.lead { max-width: 720px; margin-top: 12px; color: #a8afc1; font-size: 12.5px; line-height: 1.75; }
+
+        .code-block {
+            position: relative; overflow-x: auto; padding: 15px 17px; margin-top: 16px;
+            border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: #06080e;
+            font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 10.5px; line-height: 1.75; color: #b9c6cf;
+            white-space: pre;
+        }
+        .code-block .copy-btn {
+            position: absolute; top: 9px; right: 9px; padding: 5px 9px;
+            border: 1px solid rgba(139,92,246,.3); border-radius: 7px;
+            color: #c7b7ff; background: rgba(139,92,246,.12); font-size: 9px; font-weight: 700; cursor: pointer;
+        }
+        .code-block .copy-btn:hover { background: rgba(139,92,246,.22); }
+
+        .auth-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+        .try-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; }
+        .try-divider span {
+            color: #6d7488; font-size: 9.5px; font-weight: 800;
+            letter-spacing: .14em; text-transform: uppercase;
+        }
+        .try-divider::before, .try-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+        .lang-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+        .lang-tab {
+            padding: 8px 15px; border: 1px solid var(--border); border-radius: 10px;
+            color: var(--muted); background: rgba(255,255,255,.03);
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: all .18s ease;
+        }
+        .lang-tab:hover { color: var(--text); border-color: var(--border-strong); transform: translateY(-1px); }
+        .lang-tab.active {
+            color: #fff; border-color: transparent;
+            background: linear-gradient(135deg, #8065ff, #5a3fd4);
+            box-shadow: 0 8px 22px rgba(100,70,225,.35);
+        }
+        .lang-pane { display: none; margin-top: 12px; }
+        .lang-pane.active { display: block; }
+        .lang-pane .code-text { color: #d9e1f5; font-size: 11px; line-height: 1.75; margin: 4px 2px 2px; }
+        .auth-badge {
+            display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px;
+            border: 1px solid rgba(139,124,255,.2); border-radius: 10px;
+            background: rgba(124,92,255,.07); color: #cdc4ff; font-size: 10.5px; font-weight: 700;
+        }
+        .auth-badge code { font-family: ui-monospace, Consolas, monospace; font-size: 10px; color: #e4ddff; }
+
+        .doc-group { margin-bottom: 26px; }
+        .doc-group-header {
+            display: flex; align-items: center; gap: 11px; margin-bottom: 12px;
+        }
+        .doc-group-icon {
+            width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px;
+            border: 1px solid rgba(139,124,255,.22); color: #b9abff; background: rgba(124,92,255,.1);
+        }
+        .doc-group-icon svg { width: 16px; height: 16px; }
+        .doc-group-header h3 { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+        .doc-group-header .count { color: var(--muted); font-size: 10px; font-weight: 700; }
+
+        .endpoint-list { display: grid; border: 1px solid rgba(255,255,255,.07); border-radius: 14px; overflow: hidden; }
+        .endpoint-row {
+            display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 14px; align-items: center;
+            padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,.05); transition: .15s ease; cursor: default;
+        }
+        .endpoint-row:last-child { border-bottom: 0; }
+        .endpoint-row:hover { background: rgba(124,92,255,.05); }
+
+        .method {
+            padding: 5px 0; text-align: center; border-radius: 8px;
+            font-family: ui-monospace, Consolas, monospace; font-size: 9.5px; font-weight: 800; letter-spacing: .05em;
+        }
+        .method.GET { color: #62dc8a; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); }
+        .method.POST { color: #61c7ff; background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.25); }
+        .method.PUT { color: #fbbf58; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); }
+        .method.DELETE { color: #ff7979; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); }
+
+        .endpoint-path { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: #eef0f8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .endpoint-desc { display: block; margin-top: 4px; color: #858da3; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .endpoint-side { display: flex; align-items: center; gap: 9px; }
+        .scope-tag { padding: 4px 8px; border-radius: 6px; color: #c3b8ff; background: rgba(124,92,255,.09); border: 1px solid rgba(139,124,255,.2); font-family: ui-monospace, Consolas, monospace; font-size: 8.5px; }
+
+        .empty-state {
+            min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 36px 24px; border: 1px dashed rgba(151,125,255,.22); border-radius: 20px; text-align: center;
+            background: radial-gradient(circle at 50% 8%, rgba(128,101,255,.1), transparent 44%);
+        }
+        .empty-state.compact { min-height: 150px; border: 0; background: transparent; padding: 24px; }
+        .empty-icon {
+            width: 50px; height: 50px; display: grid; place-items: center; margin-bottom: 16px;
+            border: 1px solid rgba(151,125,255,.25); border-radius: 16px; color: #b8aaff;
+            background: linear-gradient(145deg, rgba(128,101,255,.2), rgba(128,101,255,.05));
+        }
+        .empty-icon svg { width: 22px; height: 22px; }
+        .empty-state.is-loading .empty-icon svg { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state h3 { font-size: 15px; font-weight: 800; letter-spacing: -.03em; }
+        .empty-state p { max-width: 420px; margin-top: 7px; color: #8f97ab; font-size: 11px; line-height: 1.7; }
+
+        /* Modal */
+
+        .modal-backdrop {
+            position: fixed; z-index: 100; inset: 0; display: none; align-items: center; justify-content: center;
+            padding: 20px; background: rgba(3,5,12,.8); backdrop-filter: blur(8px);
+        }
+        .modal-backdrop.show { display: flex; animation: fade .2s ease; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        .modal {
+            width: min(640px, 100%); max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
+            border: 1px solid rgba(139,124,255,.22); border-radius: 20px; background: #11141f;
+            box-shadow: 0 36px 100px rgba(0,0,0,.55); animation: modalIn .25s ease;
+        }
+        .modal.wide { width: min(860px, 100%); }
+        @keyframes modalIn { from { opacity: 0; transform: scale(.97) translateY(10px); } to { opacity: 1; transform: none; } }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 14px;
+            padding: 18px 22px; border-bottom: 1px solid var(--border);
+            background: linear-gradient(120deg, rgba(128,101,255,.09), transparent 55%);
+        }
+        .modal-header h2 { font-size: 19px; font-weight: 800; letter-spacing: -.035em; }
+        .modal-header p { margin-top: 4px; color: var(--muted); font-size: 10px; }
+        .modal-content { overflow-y: auto; padding: 22px; }
+        .modal-footer {
+            display: flex; align-items: center; justify-content: flex-end; gap: 9px;
+            padding: 15px 22px; border-top: 1px solid var(--border); background: rgba(255,255,255,.015);
+        }
+        .icon-btn.x { border: 0; background: transparent; font-size: 18px; color: var(--muted); }
+
+        .field label { display: block; margin-bottom: 8px; color: #a9b0c3; font-size: 9px; font-weight: 800; letter-spacing: .085em; }
+        .input {
+            width: 100%; height: 44px; padding: 0 14px; border: 1px solid rgba(255,255,255,.085);
+            outline: none; border-radius: 11px; color: var(--text); background: rgba(255,255,255,.032);
+            font-size: 11.5px; transition: .2s ease;
+        }
+        textarea.input { height: auto; min-height: 110px; padding: 12px 14px; resize: vertical; }
+        .input:focus { border-color: rgba(151,125,255,.6); box-shadow: 0 0 0 4px rgba(128,101,255,.1); }
+        .input::placeholder { color: #666e84; }
+        .hint-text { margin-top: 7px; color: #7d8598; font-size: 9.5px; line-height: 1.65; }
+
+        .scopes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+        .scope-check {
+            display: flex; align-items: center; gap: 9px; padding: 10px 12px;
+            border: 1px solid rgba(255,255,255,.07); border-radius: 10px;
+            background: rgba(255,255,255,.02); cursor: pointer; user-select: none;
+            font-size: 10.5px; font-weight: 700; transition: .15s ease;
+        }
+        .scope-check:hover { border-color: rgba(151,125,255,.3); }
+        .scope-check input { accent-color: #8065ff; }
+        .scope-check.all { grid-column: 1 / -1; color: #e4ddff; border-color: rgba(139,105,255,.4); background: rgba(128,101,255,.1); }
+
+        .key-reveal { text-align: center; padding: 8px 0 4px; }
+        .key-warn {
+            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px;
+            padding: 9px 13px; border: 1px solid rgba(245,158,11,.3); border-radius: 10px;
+            color: #ffd08a; background: rgba(245,158,11,.08); font-size: 10.5px; font-weight: 700;
+        }
+        .key-value {
+            padding: 16px; border: 1px dashed rgba(151,125,255,.4); border-radius: 13px;
+            background: rgba(124,92,255,.06);
+            font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: #e4ddff; word-break: break-all; line-height: 1.8;
+        }
+        .key-actions { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+
+        .toast-container { position: fixed; z-index: 200; right: 22px; bottom: 22px; display: grid; gap: 10px; }
+        .toast {
+            width: min(340px, calc(100vw - 44px)); display: grid; grid-template-columns: 34px 1fr auto;
+            gap: 10px; align-items: center; padding: 15px;
+            border: 1px solid rgba(167,139,250,.2); border-radius: 16px;
+            background: linear-gradient(145deg, rgba(124,92,255,.07), transparent 45%), rgba(17,20,33,.96);
+            box-shadow: 0 24px 70px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.045);
+            animation: toastIn .28s ease;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(25px); } to { opacity: 1; transform: none; } }
+        .toast-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: #67e18f; background: rgba(34,197,94,.12); font-weight: 800; }
+        .toast-title { font-size: 11px; font-weight: 800; }
+        .toast-message { margin-top: 3px; color: var(--muted); font-size: 9.5px; line-height: 1.55; }
+        .toast-close { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 15px; }
+
+        /* Dashboard */
+
+        .live-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid rgba(52,211,153,.28); border-radius: 999px; color: #5eead4; background: rgba(16,185,129,.07); font-size: 9.5px; font-weight: 800; letter-spacing: .12em; }
+        .live-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 0 rgba(52,211,153,.5); animation: pulse 2s infinite; }
+        @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+
+        .dash-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .panel-body { padding: 18px 20px; }
+        .meter-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+        .meter-value { font-size: 34px; font-weight: 800; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+        .meter-unit { color: var(--muted); font-size: 13px; font-weight: 700; margin-left: 3px; }
+        canvas.spark { display: block; width: 100%; height: 130px; }
+        .sub-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+        .sub-stat { min-width: 0; padding: 10px 12px; border: 1px solid rgba(255,255,255,.06); border-radius: 11px; background: rgba(255,255,255,.02); }
+        .sub-stat b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .sub-stat span { display: block; margin-top: 3px; color: #88909f; font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+        .net-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px 20px; }
+
+        .disk-row { padding: 13px 20px; border-top: 1px solid rgba(255,255,255,.05); }
+        .disk-row:first-child { border-top: 0; }
+        .disk-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 11px; }
+        .disk-meta .mount { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; color: #e8eaf2; }
+        .disk-meta .nums { flex: none; color: #98a0b3; font-variant-numeric: tabular-nums; }
+        .disk-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,.06); overflow: hidden; }
+        .disk-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7c5cff, #a78bfa); transition: width .5s ease; }
+        .disk-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .disk-fill.crit { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        .feed { max-height: 340px; overflow-y: auto; }
+        .feed-item { display: flex; gap: 11px; align-items: flex-start; padding: 11px 20px; border-top: 1px solid rgba(255,255,255,.045); }
+        .feed-item:first-child { border-top: 0; }
+        .feed-dot { flex: none; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; }
+        .feed-item.info .feed-dot { background: #56b5ff; }
+        .feed-item.warning .feed-dot { background: #fbbf58; }
+        .feed-item.error .feed-dot { background: #ff6b6b; }
+        .feed-body { min-width: 0; flex: 1; }
+        .feed-title { font-size: 11px; font-weight: 750; }
+        .feed-detail { margin-top: 2px; color: #8b93a7; font-size: 10px; word-break: break-word; line-height: 1.6; }
+        .feed-time { flex: none; padding-top: 2px; color: #6f7789; font-size: 9.5px; }
+
+        /* Toolbar & misc */
+
+        .toolbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+        .search-box { position: relative; }
+        .search-box svg, .search-box i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: #7c8399; font-style: normal; }
+        .search-input { width: 210px; height: 38px; padding: 0 12px 0 33px; border: 1px solid rgba(255,255,255,.085); outline: none; border-radius: 11px; background: rgba(255,255,255,.032); color: var(--text); font-size: 11.5px; transition: .2s ease; }
+        .search-input:focus { border-color: rgba(151,125,255,.55); box-shadow: 0 0 0 4px rgba(128,101,255,.08); }
+        .search-input::placeholder { color: #666e84; }
+
+        .status.expiring { color: #8ab4ff; background: rgba(59,130,246,.1); }
+        .status.expired { color: #ff8080; background: rgba(239,68,68,.1); }
+
+        .danger-btn { height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: #fff; background: linear-gradient(145deg, #ff5d73, #e11d48 58%, #be123c); box-shadow: 0 13px 30px rgba(225,29,72,.28); font-size: 12px; font-weight: 750; cursor: pointer; transition: .18s ease; }
+        .danger-btn:hover { transform: translateY(-1px); }
+        .danger-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+        .doc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+        .doc-group-header { cursor: pointer; user-select: none; }
+        .doc-group-header .count { margin-left: 2px; }
+        .doc-group-header .chev { margin-left: auto; color: #6f7789; transition: transform .22s ease; }
+        .doc-group.collapsed .endpoint-list { display: none; }
+        .doc-group.collapsed .chev { transform: rotate(-90deg); }
+
+        .try-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+        .try-meta { display: inline-block; margin-bottom: 10px; padding: 5px 9px; border-radius: 8px; font-size: 10px; font-weight: 800; }
+        .try-meta.ok { color: #62dc8a; background: rgba(34,197,94,.1); }
+        .try-meta.warn { color: #fbbf58; background: rgba(245,158,11,.12); }
+        .try-meta.err { color: #ff8080; background: rgba(239,68,68,.12); }
+
+        td .empty-state { min-height: 190px; border: 0; background: transparent; }
+        tr .empty-state.is-loading .empty-icon svg { animation: spin 1s linear infinite; }
+
+        .mobile-overlay { position: fixed; z-index: 45; inset: 0; display: none; background: rgba(0,0,0,.58); }
+
+        @media (max-width: 1120px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .dash-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 900px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar { transform: translateX(-105%); transition: .3s ease; }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-overlay.show { display: block; }
+            .main { grid-column: 1; padding: 24px 20px 52px; }
+            .topbar { margin: -24px -20px 26px; padding: 12px 20px; }
+            .menu-btn { display: grid; }
+            .search-input { width: 140px; }
+        }
+        @media (max-width: 650px) {
+            h1 { font-size: 28px; }
+            .stats { grid-template-columns: 1fr; }
+            .scopes-grid { grid-template-columns: 1fr 1fr; }
+            .endpoint-row { grid-template-columns: 62px minmax(0,1fr); }
+            .endpoint-side { grid-column: 1 / -1; justify-content: space-between; }
+            .main { padding: 18px 15px 46px; }
+            .topbar { min-height: 66px; margin: -18px -15px 24px; padding: 11px 15px; }
+            .sub-stats { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+            .net-grid { padding: 13px 15px; }
+            .page-header { flex-wrap: wrap; }
+            .search-input { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand-mark"><i data-lucide="plug-zap"></i></div>
+                <div>
+                    <div class="brand-title">Apira VPS<span>ApiCore</span></div>
+                    <div class="brand-subtitle">REST for everything</div>
+                </div>
+            </div>
+
+            <div class="nav-label">Gateway</div>
+            <nav class="nav">
+                <button class="nav-item active" data-page="dash">
+                    <i data-lucide="layout-dashboard"></i>
+                    Dashboard
+                </button>
+                <button class="nav-item" data-page="keys">
+                    <i data-lucide="key-round"></i>
+                    API Keys
+                </button>
+                <button class="nav-item" data-page="docs">
+                    <i data-lucide="book-open"></i>
+                    Documentation
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="base-card">
+                    <div class="base-actions">
+                        <span>API BASE URL</span>
+                        <button class="icon-btn base-copy" id="baseUrlCopy" title="Copy URL"><i data-lucide="copy"></i></button>
+                    </div>
+                    <code id="baseUrlCode" title="Click to copy">-</code>
+                </div>
+                <div class="user-card" style="display:flex;align-items:center;gap:10px;padding:10px 9px;">
+                    <div style="width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(167,139,250,.19);border-radius:12px;color:#ded9ff;background:linear-gradient(145deg,rgba(124,92,255,.25),rgba(35,30,67,.7));font-size:12px;font-weight:800;">SA</div>
+                    <div><div style="font-size:12px;font-weight:700;">Server Admin</div>
+                    <div style="margin-top:3px;color:#939aad;font-size:10px;">System Administrator</div></div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+
+        <main class="main">
+            <header class="topbar">
+                <button class="icon-btn menu-btn" id="menuButton"><i data-lucide="menu"></i></button>
+                <div class="top-actions">
+                    <button class="icon-btn" id="refreshButton" title="Refresh"><i data-lucide="refresh-cw"></i></button>
+                    <button class="primary-btn" id="openKeyModal"><i data-lucide="plus"></i>Create API key</button>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+
+            <section class="page active" id="dash">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow"><i data-lucide="activity"></i>Live monitoring</div>
+                        <h1>Dashboard</h1>
+                        <p class="page-description">
+                            Live view of host resources and gateway activity - CPU, memory, disks and the
+                            latest audited events, refreshed every few seconds.
+                        </p>
+                    </div>
+                    <div class="live-pill"><span class="dot"></span>LIVE</div>
+                </div>
+
+                <div class="stats" style="margin-bottom:14px">
+                    <article class="stat-card" style="--color:#a78bfa">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="key-round"></i></div></div>
+                        <div class="stat-value" id="dashKeys">-</div>
+                        <div class="stat-label">Active keys</div>
+                    </article>
+                    <article class="stat-card" style="--color:#56b5ff">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="activity"></i></div></div>
+                        <div class="stat-value" id="dashReq">-</div>
+                        <div class="stat-label">Requests  |  last 24h</div>
+                    </article>
+                    <article class="stat-card" style="--color:#f87171">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="shield-alert"></i></div></div>
+                        <div class="stat-value" id="dashDenied">-</div>
+                        <div class="stat-label">Denied  |  last 24h</div>
+                    </article>
+                    <article class="stat-card" style="--color:#34d399">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="clock"></i></div></div>
+                        <div class="stat-value" id="dashUptime">-</div>
+                        <div class="stat-label">Server uptime</div>
+                    </article>
+                </div>
+
+                <div class="dash-grid" style="margin-bottom:18px">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div><div class="panel-title">CPU usage</div>
+                            <div class="panel-subtitle" id="cpuSub">cores -  |  load -</div></div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="meter-head"><span class="meter-value"><span id="cpuVal">-</span><span class="meter-unit">%</span></span></div>
+                            <canvas class="spark" id="cpuSpark" height="130"></canvas>
+                            <div class="sub-stats">
+                                <div class="sub-stat"><b id="load1">-</b><span>Load 1m</span></div>
+                                <div class="sub-stat"><b id="load5">-</b><span>Load 5m</span></div>
+                                <div class="sub-stat"><b id="procCount">-</b><span>Processes</span></div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div><div class="panel-title">Memory</div>
+                            <div class="panel-subtitle" id="ramSub">total -</div></div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="meter-head"><span class="meter-value"><span id="ramVal">-</span><span class="meter-unit">%</span></span></div>
+                            <canvas class="spark" id="ramSpark" height="130"></canvas>
+                            <div class="sub-stats">
+                                <div class="sub-stat"><b id="ramUsed">-</b><span>Used</span></div>
+                                <div class="sub-stat"><b id="ramFree">-</b><span>Available</span></div>
+                                <div class="sub-stat"><b id="swapVal">-</b><span>Swap used</span></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="dash-grid" style="margin-bottom:18px">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div><div class="panel-title">Disk usage</div>
+                            <div class="panel-subtitle">Mounted filesystems</div></div>
+                        </div>
+                        <div id="diskList">
+                            <div class="empty-state compact is-loading">
+                                <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                <h3>Loading disks</h3>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div><div class="panel-title">Network counters</div>
+                            <div class="panel-subtitle">Since boot  |  <span id="netRate">rates pending...</span></div></div>
+                        </div>
+                        <div class="net-grid">
+                            <div class="sub-stat"><b id="netRecv">-</b><span>Received</span></div>
+                            <div class="sub-stat"><b id="netSent">-</b><span>Sent</span></div>
+                            <div class="sub-stat"><b id="netRxRate">-</b><span>Rx rate</span></div>
+                            <div class="sub-stat"><b id="netTxRate">-</b><span>Tx rate</span></div>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div><div class="panel-title">Recent gateway activity</div>
+                        <div class="panel-subtitle">Latest audited events</div></div>
+                    </div>
+                    <div class="feed" id="activityFeed">
+                        <div class="empty-state compact is-loading">
+                            <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                            <h3>Loading activity</h3>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- API Keys -->
+
+            <section class="page" id="keys">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Access control</div>
+                        <h1>API keys</h1>
+                        <p class="page-description">
+                            Issue scoped keys for external tools and automations. Keys are stored as SHA-256 hashes -
+                            the full value is visible only once at creation.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <article class="stat-card" style="--color:#a78bfa;--glow:#8b5cf6">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="key-round"></i></div></div>
+                        <div class="stat-value" id="statTotal">-</div>
+                        <div class="stat-label">Total keys</div>
+                    </article>
+                    <article class="stat-card" style="--color:#34d399;--glow:#10b981">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="shield-check"></i></div></div>
+                        <div class="stat-value" id="statActive">-</div>
+                        <div class="stat-label">Active keys</div>
+                    </article>
+                    <article class="stat-card" style="--color:#56b5ff;--glow:#3b82f6">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="activity"></i></div></div>
+                        <div class="stat-value" id="statRequests">-</div>
+                        <div class="stat-label">Requests  |  last 24h</div>
+                    </article>
+                    <article class="stat-card" style="--color:#f87171;--glow:#ef4444">
+                        <div class="stat-top"><div class="stat-icon"><i data-lucide="shield-alert"></i></div></div>
+                        <div class="stat-value" id="statDenied">-</div>
+                        <div class="stat-label">Denied  |  last 24h</div>
+                    </article>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div><div class="panel-title">Issued keys</div>
+                        <div class="panel-subtitle">Revoking a key blocks it instantly across all clients</div></div>
+                        <div class="toolbar">
+                            <div class="search-box"><i data-lucide="search"></i>
+                                <input class="search-input" id="keySearch" placeholder="Search keys..." spellcheck="false">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th><th>Prefix</th><th>Scopes</th><th>Rate</th>
+                                    <th>Requests</th><th>Expires</th><th>Last used</th><th>Status</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keysBody">
+                                <tr><td colspan="9"><div class="empty-state is-loading">
+                                    <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                    <h3>Loading keys</h3></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Documentation -->
+
+            <section class="page" id="docs">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Developer reference</div>
+                        <h1>REST documentation</h1>
+                        <p class="page-description">
+                            Every server capability exposed as a versioned JSON endpoint - with live try-it requests
+                            signed by your own keys.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="docs-hero">
+                    <h2>One gateway for the whole server.</h2>
+                    <p class="lead">Authenticate with a bearer key and call any endpoint below. Responses are always
+                        JSON envelopes: <span class="mono">{ success, data }</span> or
+                        <span class="mono">{ success:false, error:{ code, message } }</span>.</p>
+                    <div class="auth-badges">
+                        <span class="auth-badge">Header 1&nbsp; <code>Authorization: Bearer &lt;your-key&gt;</code></span>
+                        <span class="auth-badge">Header 2&nbsp; <code>X-API-Key: &lt;your-key&gt;</code></span>
+                    </div>
+                    <div class="code-block"><button class="copy-btn" data-copy-code>Copy</button><span id="curlSample">-</span></div>
+                </div>
+
+
+                <div class="doc-toolbar">
+                    <div class="search-box"><i data-lucide="search"></i>
+                        <input class="search-input" id="docSearch" style="width:280px"
+                            placeholder="Search endpoints, paths, scopes..." spellcheck="false">
+                    </div>
+                    <span class="auth-badge">Click a group header to collapse it</span>
+                </div>
+
+                <div id="docsGroups"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create key modal -->
+
+    <div class="modal-backdrop" id="keyModal">
+        <div class="modal" style="width:min(600px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2 id="keyModalTitle">Create an API key</h2>
+                    <p>Nothing is enabled by default - pick exactly the modules this key may call.</p>
+                </div>
+                <button class="icon-btn x" id="closeKeyModal">&times;</button>
+            </div>
+            <div class="modal-content" id="keyCreateView">
+                <div class="field" style="margin-bottom:14px">
+                    <label>KEY NAME</label>
+                    <input class="input" id="keyName" placeholder="e.g. deploy-bot">
+                </div>
+                <div class="field" style="margin-bottom:14px">
+                    <label>RATE LIMIT (REQUESTS/MINUTE)</label>
+                    <select class="input" id="keyRate">
+                        <option value="60">60 / minute</option>
+                        <option value="120" selected>120 / minute</option>
+                        <option value="300">300 / minute</option>
+                        <option value="600">600 / minute</option>
+                        <option value="1000">1000 / minute</option>
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:14px">
+                    <label>EXPIRES AFTER</label>
+                    <select class="input" id="keyExpires">
+                        <option value="0" selected>Never expires</option>
+                        <option value="7">7 days</option>
+                        <option value="30">30 days</option>
+                        <option value="90">90 days</option>
+                        <option value="365">365 days</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>SCOPES</label>
+                    <div class="scopes-grid" id="scopesGrid"></div>
+                </div>
+            </div>
+            <div class="modal-content" id="keyRevealView" style="display:none">
+                <div class="key-reveal">
+                    <div class="key-warn">! Copy this key now - it will never be shown again.</div>
+                    <div class="key-value mono" id="revealedKey"></div>
+                    <div class="key-actions">
+                        <button class="run-btn" id="copyKeyButton"><i data-lucide="clipboard-copy"></i>Copy key</button>
+                        <button class="run-btn green-action" id="savedItButton">I saved it</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="keyModalFooter">
+                <button class="secondary-btn" id="cancelKeyModal">Cancel</button>
+                <button class="primary-btn" id="createKeyButton"><i data-lucide="sparkles"></i>Create key</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Try-it modal -->
+
+    <div class="modal-backdrop" id="tryModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <div>
+                    <h2><span class="method" id="tryMethod">GET</span>&nbsp; <span class="mono" id="tryPathLabel" style="font-size:15px"></span></h2>
+                    <p id="tryDesc"></p>
+                </div>
+                <button class="icon-btn x" id="closeTryModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="try-divider"><span>Live request</span></div>
+                <div class="field" style="margin-bottom:12px">
+                    <label>FULL URL</label>
+                    <input class="input mono" id="tryUrl" placeholder="...">
+                </div>
+                <div class="field" style="margin-bottom:12px">
+                    <label>API KEY</label>
+                    <input class="input mono" id="tryKey" type="password" placeholder="wac_...">
+                    <p class="hint-text">Stored only in this browser's sessionStorage for the session.</p>
+                </div>
+                <div class="field" style="margin-bottom:12px" id="tryBodyWrap">
+                    <label>JSON BODY</label>
+                    <textarea class="input mono" id="tryBody" rows="5" spellcheck="false"></textarea>
+                </div>
+                <div class="log-viewer" id="tryOutput"
+                     style="padding:14px 16px;border-radius:13px;border:1px solid rgba(255,255,255,.07);background:#06080e;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;line-height:1.7;color:#b9c6cf;white-space:pre-wrap;word-break:break-word;min-height:120px">
+                    Response appears here.
+                </div>
+                <div class="try-actions">
+                    <button class="secondary-btn" id="tryCurlBtn"><i data-lucide="clipboard-copy"></i>Copy as cURL</button>
+                </div>
+
+                <div class="try-divider"><span>Same request in your language</span></div>
+
+                <div class="lang-tabs" id="tryLangTabs">
+                    <button type="button" class="lang-tab active" data-lang="curl">cURL</button>
+                    <button type="button" class="lang-tab" data-lang="python">Python</button>
+                    <button type="button" class="lang-tab" data-lang="javascript">JavaScript</button>
+                    <button type="button" class="lang-tab" data-lang="php">PHP</button>
+                    <button type="button" class="lang-tab" data-lang="go">Go</button>
+                </div>
+
+                <div id="tryLangPanes">
+                    <div class="code-block lang-pane active" data-pane="curl">
+                        <button class="copy-btn" data-copy-code>Copy</button><pre class="code-text" id="snipCurl"></pre>
+                    </div>
+                    <div class="code-block lang-pane" data-pane="python">
+                        <button class="copy-btn" data-copy-code>Copy</button><pre class="code-text" id="snipPython"></pre>
+                    </div>
+                    <div class="code-block lang-pane" data-pane="javascript">
+                        <button class="copy-btn" data-copy-code>Copy</button><pre class="code-text" id="snipJs"></pre>
+                    </div>
+                    <div class="code-block lang-pane" data-pane="php">
+                        <button class="copy-btn" data-copy-code>Copy</button><pre class="code-text" id="snipPhp"></pre>
+                    </div>
+                    <div class="code-block lang-pane" data-pane="go">
+                        <button class="copy-btn" data-copy-code>Copy</button><pre class="code-text" id="snipGo"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelTry">Close</button>
+                <button class="primary-btn" id="sendTryButton"><i data-lucide="send-horizontal"></i>Send request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm modal -->
+
+    <div class="modal-backdrop" id="confirmModal">
+        <div class="modal" style="width:min(480px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2 id="confirmTitle">Are you sure?</h2>
+                    <p>This action cannot be undone.</p>
+                </div>
+                <button class="icon-btn x" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <p id="confirmMessage" style="color:#aeb4c6;font-size:12px;line-height:1.75;margin-bottom:14px"></p>
+                <div class="field">
+                    <label id="confirmPhraseLabel">TYPE THE PHRASE BELOW</label>
+                    <input class="input mono" id="confirmInput" placeholder="..." autocomplete="off" spellcheck="false">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelConfirm">Cancel</button>
+                <button class="danger-btn" id="confirmAccept" disabled>Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="ui.js?v=2.3.3"></script>
+</body>
+
+</html>
+

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#070811">
+    <title>Apira VPS Installer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg:#070811; --sidebar:#0a0b14; --surface:#11131f; --surface-2:#161826;
+            --border:rgba(255,255,255,.075); --strong:rgba(145,120,255,.35);
+            --text:#f7f7fc; --muted:#9299ad; --purple:#8065ff; --purple-2:#a994ff;
+            --green:#35d475; --red:#ff6878; --amber:#f6b83f; --cyan:#42c9e8;
+            --shadow:0 24px 70px rgba(0,0,0,.32);
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        body{
+            min-height:100vh;color:var(--text);font-family:"Manrope","Segoe UI",sans-serif;
+            background:
+                radial-gradient(900px 560px at 72% -12%,rgba(128,101,255,.2),transparent 62%),
+                radial-gradient(650px 450px at 10% 105%,rgba(42,191,215,.06),transparent 65%),var(--bg);
+            -webkit-font-smoothing:antialiased;
+        }
+        button,input{font:inherit;color:inherit}
+        button{cursor:pointer}
+        ::selection{background:var(--purple);color:#fff}
+        ::-webkit-scrollbar{width:8px;height:8px}
+        ::-webkit-scrollbar-thumb{border:2px solid #080910;border-radius:20px;background:#39344f}
+        .app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
+        .sidebar{
+            position:fixed;z-index:40;inset:0 auto 0 0;width:260px;display:flex;flex-direction:column;
+            padding:24px 16px;border-right:1px solid var(--border);
+            background:radial-gradient(circle at 25% 0,rgba(128,101,255,.11),transparent 28%),rgba(9,10,18,.93);
+            backdrop-filter:blur(22px);
+        }
+        .brand{display:flex;align-items:center;gap:12px;padding:0 10px 29px}
+        .brand-mark{
+            width:43px;height:43px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);
+            border-radius:14px;background:linear-gradient(145deg,#9a84ff,#704eee 55%,#5030b8);
+            box-shadow:0 14px 36px rgba(96,66,218,.38),inset 0 1px rgba(255,255,255,.22);
+        }
+        .brand-mark svg{width:21px}
+        .brand-title{font-size:17px;font-weight:800;letter-spacing:-.04em}
+        .brand-title span{color:#b5a7ff}
+        .brand-subtitle{margin-top:3px;color:#747c90;font-size:8px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+        .nav-label{margin:12px 12px 9px;color:#626a80;font-size:9px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+        .nav{display:grid;gap:5px}
+        .nav-item{
+            position:relative;width:100%;height:44px;display:flex;align-items:center;gap:12px;padding:0 13px;
+            border:1px solid transparent;border-radius:12px;color:#9299ad;background:transparent;
+            font-size:12px;font-weight:700;text-align:left;transition:.18s ease;
+        }
+        .nav-item svg{width:17px}
+        .nav-item:hover{color:#ececf4;border-color:var(--border);background:rgba(255,255,255,.035)}
+        .nav-item.active{color:#fff;border-color:rgba(151,125,255,.2);background:linear-gradient(90deg,rgba(128,101,255,.23),rgba(128,101,255,.055))}
+        .nav-item.active:before{position:absolute;left:-17px;width:3px;height:23px;content:"";border-radius:0 4px 4px 0;background:#9b84ff;box-shadow:0 0 16px #7558ee}
+        .side-system{
+            margin-top:auto;padding:15px;border:1px solid var(--border);border-radius:16px;
+            background:linear-gradient(145deg,rgba(128,101,255,.07),rgba(255,255,255,.018));
+        }
+        .system-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+        .system-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+        .system-head strong{font-size:10px}
+        .system-head span{margin-left:auto;color:var(--green);font-size:8px;font-weight:800}
+        .system-line{display:flex;justify-content:space-between;gap:10px;margin-top:8px;color:#7f879b;font-size:9px}
+        .system-line b{max-width:125px;overflow:hidden;color:#cfd2de;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+        .main{grid-column:2;min-width:0;padding:0 34px 60px}
+        .topbar{
+            position:sticky;z-index:30;top:0;min-height:74px;display:flex;align-items:center;gap:12px;
+            margin:0 -34px 28px;padding:13px 34px;border-bottom:1px solid rgba(255,255,255,.06);
+            background:rgba(7,8,17,.82);backdrop-filter:blur(24px);
+        }
+        .menu-btn{display:none}
+        .search{position:relative;width:min(470px,48vw)}
+        .search svg{position:absolute;top:50%;left:14px;width:16px;color:#7f879b;transform:translateY(-50%)}
+        .search input{
+            width:100%;height:43px;padding:0 15px 0 41px;border:1px solid var(--border);outline:0;
+            border-radius:13px;background:rgba(255,255,255,.03);font-size:11px;transition:.18s ease;
+        }
+        .search input:focus{border-color:rgba(151,125,255,.55);box-shadow:0 0 0 4px rgba(128,101,255,.09)}
+        .top-actions{display:flex;gap:8px;margin-left:auto}
+        .icon-btn,.primary-btn,.secondary-btn{
+            min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+            border:1px solid var(--border);border-radius:11px;font-size:10px;font-weight:800;transition:.18s ease;
+        }
+        .icon-btn{width:40px;padding:0;background:rgba(255,255,255,.03)}
+        .icon-btn svg,.primary-btn svg,.secondary-btn svg{width:15px}
+        .icon-btn:hover,.secondary-btn:hover{border-color:var(--strong);background:rgba(128,101,255,.08);transform:translateY(-1px)}
+        .primary-btn{padding:0 15px;border-color:rgba(255,255,255,.14);background:linear-gradient(145deg,#9076ff,#704fed);box-shadow:0 12px 30px rgba(84,55,202,.3)}
+        .primary-btn:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(84,55,202,.4)}
+        .secondary-btn{padding:0 13px;background:rgba(255,255,255,.03)}
+        .danger-btn{min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 13px;border:1px solid rgba(248,113,113,.25);border-radius:11px;color:#ff939d;background:rgba(239,68,68,.07);font-size:10px;font-weight:800;transition:.18s ease}.danger-btn:hover{border-color:rgba(248,113,113,.5);background:rgba(239,68,68,.14);transform:translateY(-1px)}.danger-btn svg{width:15px}
+        .hero{
+            position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(290px,.75fr);
+            gap:28px;overflow:hidden;margin-bottom:22px;padding:30px;border:1px solid rgba(151,125,255,.19);
+            border-radius:22px;background:radial-gradient(circle at 88% 10%,rgba(128,101,255,.24),transparent 35%),linear-gradient(140deg,rgba(128,101,255,.1),rgba(15,17,29,.78) 48%);
+            box-shadow:inset 0 1px rgba(255,255,255,.05),0 28px 80px rgba(0,0,0,.2);
+        }
+        .eyebrow{display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;padding:5px 9px;border:1px solid rgba(151,125,255,.2);border-radius:999px;color:#b4a5ff;background:rgba(128,101,255,.08);font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+        .eyebrow:before{width:5px;height:5px;content:"";border-radius:50%;background:#a38eff;box-shadow:0 0 10px #8d70ff}
+        h1{max-width:680px;font-size:clamp(30px,4vw,48px);line-height:1.06;letter-spacing:-.058em}
+        .hero-copy p{max-width:650px;margin-top:14px;color:#9ca3b5;font-size:12px;line-height:1.8}
+        .hero-actions{display:flex;gap:9px;margin-top:22px}
+        .hero-stats{align-self:end;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .hero-stat{padding:16px;border:1px solid var(--border);border-radius:14px;background:rgba(5,7,14,.22);box-shadow:inset 0 1px rgba(255,255,255,.03)}
+        .hero-stat span{color:#7f879b;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+        .hero-stat strong{display:block;margin-top:8px;font-size:17px;letter-spacing:-.04em}
+        .toolbar{display:flex;align-items:center;gap:8px;margin:22px 0 16px}
+        .chips{display:flex;gap:6px;overflow:auto;padding-bottom:2px}
+        .chip{height:34px;padding:0 12px;border:1px solid var(--border);border-radius:10px;color:#9299ad;background:rgba(255,255,255,.025);font-size:9px;font-weight:800;white-space:nowrap}
+        .chip.active,.chip:hover{color:#e8e4ff;border-color:rgba(151,125,255,.27);background:rgba(128,101,255,.09)}
+        .section-meta{margin-left:auto;color:#767e92;font-size:9px;white-space:nowrap}
+        .catalog{display:grid;grid-template-columns:repeat(3,minmax(250px,1fr));gap:14px}
+        .tool-card{
+            position:relative;min-height:246px;display:flex;flex-direction:column;overflow:hidden;padding:20px;
+            border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.043),transparent 42%),rgba(15,17,29,.76);
+            box-shadow:inset 0 1px rgba(255,255,255,.035),0 18px 52px rgba(0,0,0,.16);transition:.22s ease;
+        }
+        .tool-card:before{position:absolute;inset:0 auto auto 0;width:100%;height:1px;content:"";opacity:.55;background:linear-gradient(90deg,transparent,rgba(151,125,255,.7),transparent)}
+        .tool-card:hover{border-color:rgba(151,125,255,.24);box-shadow:var(--shadow);transform:translateY(-3px)}
+        .tool-top{display:flex;align-items:flex-start;gap:12px}
+        .tool-icon{width:44px;height:44px;display:grid;flex:0 0 auto;place-items:center;border:1px solid rgba(151,125,255,.2);border-radius:13px;color:#ad9eff;background:rgba(128,101,255,.1)}
+        .tool-icon svg{width:20px}
+        .tool-title{min-width:0}
+        .tool-title h3{font-size:13px;font-weight:800;letter-spacing:-.025em}
+        .tool-category{margin-top:4px;color:#777f94;font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+        .badge{margin-left:auto;padding:5px 7px;border:1px solid var(--border);border-radius:8px;color:#8991a5;background:rgba(255,255,255,.025);font-size:8px;font-weight:800}
+        .badge.installed{color:#6ae08f;border-color:rgba(34,197,94,.18);background:rgba(34,197,94,.07)}
+        .badge.caution{color:#f5bd54;border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.07)}
+        .badge.destructive{color:#ff8290;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.07)}
+        .tool-card>p{margin:17px 0;color:#939bad;font-size:10px;line-height:1.72}
+        .requires{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px}
+        .requires span{padding:4px 6px;border-radius:6px;color:#747d91;background:rgba(255,255,255,.025);font-size:8px}
+        .tool-footer{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.055)}
+        .tool-footer .primary-btn,.tool-footer .secondary-btn,.tool-footer .danger-btn{min-height:34px}
+        .tool-version{min-width:0;overflow:hidden;margin-left:auto;color:#697186;font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+        .empty{grid-column:1/-1;min-height:270px;display:grid;place-items:center;padding:40px;border:1px dashed rgba(151,125,255,.2);border-radius:18px;color:#8d95a8;text-align:center}
+        .empty svg{width:32px;margin-bottom:14px;color:#a994ff}
+        .empty h3{color:#e8e9f0;font-size:14px}.empty p{margin-top:7px;font-size:10px}
+        .modal-backdrop{position:fixed;z-index:100;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,4,10,.8);backdrop-filter:blur(9px)}
+        .modal-backdrop.show{display:flex}
+        .modal{width:min(650px,100%);max-height:90vh;overflow:hidden;border:1px solid var(--strong);border-radius:21px;background:#11131f;box-shadow:0 38px 110px rgba(0,0,0,.6)}
+        .modal-head{display:flex;align-items:center;gap:13px;padding:20px;border-bottom:1px solid var(--border)}
+        .modal-head-copy{min-width:0;flex:1}.modal-head h2{font-size:17px;letter-spacing:-.03em}.modal-head p{margin-top:4px;color:var(--muted);font-size:9px}
+        .modal-body{max-height:62vh;overflow:auto;padding:20px}
+        .notice{display:flex;gap:11px;padding:13px;border:1px solid rgba(245,158,11,.16);border-radius:12px;color:#b9a888;background:rgba(245,158,11,.055);font-size:9px;line-height:1.65}
+        .notice svg{width:17px;flex:0 0 auto;color:#f4b944}
+        .confirm-label{display:block;margin:18px 0 8px;color:#858da1;font-size:9px;font-weight:800}
+        .confirm-input{width:100%;height:43px;padding:0 13px;border:1px solid var(--border);outline:0;border-radius:11px;background:rgba(255,255,255,.03);font-family:monospace;font-size:11px}
+        .confirm-input:focus{border-color:rgba(151,125,255,.55);box-shadow:0 0 0 4px rgba(128,101,255,.08)}
+        .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:15px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.012)}
+        .console{min-height:260px;max-height:390px;overflow:auto;padding:14px;border:1px solid var(--border);border-radius:12px;color:#b9c1d0;background:#080a11;font:10px/1.7 Consolas,monospace;white-space:pre-wrap}.terminal-input-row{display:flex;gap:8px;margin-top:9px}.terminal-input{min-width:0;flex:1;height:40px;padding:0 12px;border:1px solid var(--border);outline:0;border-radius:10px;background:#080a11;font:10px Consolas,monospace}.terminal-input:focus{border-color:rgba(151,125,255,.55);box-shadow:0 0 0 4px rgba(128,101,255,.08)}
+        .job-status{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;padding:6px 8px;border-radius:8px;color:#66d98b;background:rgba(34,197,94,.08);font-size:8px;font-weight:800;text-transform:uppercase}
+        .job-status.running{color:#69c9ff;background:rgba(59,130,246,.09)}
+        .job-status.failed{color:#ff7b89;background:rgba(239,68,68,.09)}
+        .credentials{display:none;margin-bottom:14px;padding:16px;border:1px solid rgba(151,125,255,.28);border-radius:15px;background:linear-gradient(135deg,rgba(124,92,255,.12),rgba(63,203,255,.045));box-shadow:inset 0 1px rgba(255,255,255,.035)}
+        .credentials.show{display:block}.credentials-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:13px}.credentials-head h3{font-size:12px}.credentials-head p{margin-top:4px;color:var(--muted);font-size:8px;line-height:1.55}.credential-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .credential{min-width:0;padding:10px;border:1px solid var(--border);border-radius:10px;background:rgba(5,7,13,.45)}.credential.wide{grid-column:1/-1}.credential label{display:block;margin-bottom:6px;color:#777f93;font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.credential-row{display:flex;align-items:center;gap:8px}.credential code{min-width:0;flex:1;overflow:hidden;color:#eceaff;font:9px/1.4 Consolas,monospace;text-overflow:ellipsis;white-space:nowrap}.copy-credential{width:27px;height:27px;display:grid;flex:0 0 auto;place-items:center;border:1px solid var(--border);border-radius:8px;color:#aa97ff;background:rgba(255,255,255,.025);cursor:pointer}.copy-credential:hover{border-color:rgba(151,125,255,.45);background:rgba(124,92,255,.1)}.credential-warning{margin-top:11px;color:#b5a786;font-size:8px;line-height:1.55}
+        .toast-wrap{position:fixed;z-index:200;right:20px;bottom:20px;display:grid;gap:8px}
+        .toast{width:min(350px,calc(100vw - 40px));display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--strong);border-radius:14px;background:rgba(17,19,31,.96);box-shadow:var(--shadow)}
+        .toast-icon{width:32px;height:32px;display:grid;flex:0 0 auto;place-items:center;border-radius:10px;color:#65de8c;background:rgba(34,197,94,.09)}
+        .toast.error .toast-icon{color:#ff7c8a;background:rgba(239,68,68,.09)}
+        .toast strong{font-size:10px}.toast p{margin-top:4px;color:var(--muted);font-size:9px;line-height:1.5}
+        .mobile-overlay{position:fixed;z-index:35;inset:0;display:none;background:rgba(0,0,0,.62);backdrop-filter:blur(4px)}
+        @media(max-width:1100px){.catalog{grid-template-columns:repeat(2,minmax(240px,1fr))}.hero{grid-template-columns:1fr}.hero-stats{grid-template-columns:repeat(4,1fr)}}
+        @media(max-width:850px){.app{grid-template-columns:1fr}.sidebar{transform:translateX(-105%);transition:.25s ease}.sidebar.open{transform:translateX(0)}.mobile-overlay.show{display:block}.main{grid-column:1;padding:0 20px 45px}.topbar{margin:0 -20px 24px;padding:12px 20px}.menu-btn{display:inline-flex}}
+        @media(max-width:620px){.main{padding:0 14px 38px}.topbar{margin:0 -14px 20px;padding:10px 14px}.search{width:100%}.top-actions .primary-btn{display:none}.hero{padding:23px}.hero-stats{grid-template-columns:1fr 1fr}.catalog{grid-template-columns:1fr}.section-meta{display:none}.toolbar{align-items:flex-start;flex-direction:column}.chips{width:100%}.credential-grid{grid-template-columns:1fr}.credential.wide{grid-column:auto}}
+        @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand"><div class="brand-mark"><i data-lucide="package-check"></i></div><div><div class="brand-title">Apira VPS <span>Installer</span></div><div class="brand-subtitle">One-click server setup</div></div></div>
+        <div class="nav-label">Library</div>
+        <nav class="nav">
+            <button class="nav-item active" data-filter="All"><i data-lucide="layout-grid"></i>All tools</button>
+            <button class="nav-item" data-filter="VPN & Tunnels"><i data-lucide="key-round"></i>VPN & Tunnels</button>
+            <button class="nav-item" data-filter="AI Assistants"><i data-lucide="sparkles"></i>AI Assistants</button>
+            <button class="nav-item" data-filter="Security"><i data-lucide="shield-check"></i>Security</button>
+            <button class="nav-item" data-filter="Server Platforms"><i data-lucide="server-cog"></i>Server Platforms</button>
+            <button class="nav-item" data-filter="Operating Systems"><i data-lucide="disc-3"></i>Operating Systems</button>
+            <button class="nav-item" data-filter="Databases"><i data-lucide="database"></i>Databases</button>
+            <button class="nav-item" data-filter="Monitoring"><i data-lucide="chart-no-axes-combined"></i>Monitoring</button>
+            <button class="nav-item" id="historyNav"><i data-lucide="history"></i>Installation history</button>
+        </nav>
+        <div class="side-system">
+            <div class="system-head"><i class="system-dot"></i><strong>Server ready</strong><span id="rootState">Checking</span></div>
+            <div class="system-line"><span>Operating system</span><b id="osName">—</b></div>
+            <div class="system-line"><span>Architecture</span><b id="archName">—</b></div>
+            <div class="system-line"><span>Package manager</span><b id="packageManager">—</b></div>
+        </div>
+    </aside>
+    <div class="mobile-overlay" id="overlay"></div>
+    <main class="main">
+        <header class="topbar">
+            <button class="icon-btn menu-btn" id="menuButton"><i data-lucide="menu"></i></button>
+            <div class="search"><i data-lucide="search"></i><input id="searchInput" placeholder="Search tools, platforms and assistants…"></div>
+            <div class="top-actions"><button class="icon-btn" id="refreshButton" title="Refresh status"><i data-lucide="refresh-cw"></i></button><button class="primary-btn" id="historyButton"><i data-lucide="terminal-square"></i>View activity</button></div>
+        </header>
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="eyebrow">Curated server toolkit</div>
+                <h1>Install powerful server tools with confidence.</h1>
+                <p>One trusted catalog for infrastructure, security, AI assistants and server platforms. Every action is compatibility-checked, confirmed and logged before it touches your server.</p>
+                <div class="hero-actions"><button class="primary-btn" id="browseButton"><i data-lucide="arrow-down"></i>Browse catalog</button><button class="secondary-btn" id="showInstalled"><i data-lucide="badge-check"></i>Installed tools</button></div>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat"><span>Available</span><strong id="availableCount">—</strong></div>
+                <div class="hero-stat"><span>Installed</span><strong id="installedCount">—</strong></div>
+                <div class="hero-stat"><span>Categories</span><strong id="categoryCount">—</strong></div>
+                <div class="hero-stat"><span>Active jobs</span><strong id="activeCount">—</strong></div>
+            </div>
+        </section>
+        <section id="catalogSection">
+            <div class="toolbar"><div class="chips" id="chips"></div><span class="section-meta" id="resultCount">Loading catalog…</span></div>
+            <div class="catalog" id="catalog"></div>
+        </section>
+    </main>
+</div>
+<div class="modal-backdrop" id="installModal"><div class="modal">
+    <div class="modal-head"><div class="tool-icon" id="modalIcon"></div><div class="modal-head-copy"><h2 id="modalTitle">Install tool</h2><p id="modalSubtitle"></p></div><button class="icon-btn" data-close-modal><i data-lucide="x"></i></button></div>
+    <div class="modal-body"><div class="notice" id="modalNotice"><i data-lucide="triangle-alert"></i><span></span></div><label class="confirm-label" id="confirmLabel"></label><input class="confirm-input" id="confirmationInput" autocomplete="off" spellcheck="false"></div>
+    <div class="modal-foot"><button class="secondary-btn" data-close-modal>Cancel</button><button class="primary-btn" id="confirmInstall"><i data-lucide="download"></i>Start installation</button></div>
+</div></div>
+<div class="modal-backdrop" id="jobModal"><div class="modal">
+    <div class="modal-head"><div class="tool-icon"><i data-lucide="terminal-square"></i></div><div class="modal-head-copy"><h2>Installation activity</h2><p>Live output and recent operations</p></div><button class="icon-btn" data-close-job><i data-lucide="x"></i></button></div>
+    <div class="modal-body"><div class="job-status" id="jobStatus">Idle</div><section class="credentials" id="credentialsCard"><div class="credentials-head"><div><h3>Secure installation credentials</h3><p>Generated by the official installer and available only in your authenticated session.</p></div><i data-lucide="key-round"></i></div><div class="credential-grid" id="credentialGrid"></div><p class="credential-warning">Save these details in a password manager. Passwords and API tokens are hidden from the activity log.</p></section><pre class="console" id="consoleOutput">No installation selected.</pre><div class="terminal-input-row" id="terminalInputRow"><input class="terminal-input" id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Type a response and press Enter"><button class="primary-btn" id="sendTerminalInput" type="button"><i data-lucide="send"></i>Send</button></div></div>
+    <div class="modal-foot"><button class="secondary-btn" id="loadLatest">Load latest</button><button class="primary-btn" data-close-job>Done</button></div>
+</div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+<script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080a12">
+    <title>Apira VPS OpsDeck — Docker, Git & Cron operations</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg: #070811;
+            --sidebar: rgba(10, 11, 20, 0.92);
+            --border: rgba(255, 255, 255, 0.075);
+            --border-strong: rgba(154, 128, 255, 0.3);
+            --text: #f8f8fc;
+            --muted: #939aad;
+            --purple: #8065ff;
+            --shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            background:
+                radial-gradient(1050px 620px at 68% -18%, rgba(34, 211, 238, 0.13), transparent 62%),
+                radial-gradient(750px 520px at 5% 102%, rgba(80, 200, 120, 0.07), transparent 66%),
+                #070811;
+            font-family: "Manrope", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            position: fixed;
+            z-index: -1;
+            inset: 0;
+            content: "";
+            opacity: 0.14;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 46px 46px;
+            mask-image: linear-gradient(to bottom, black, transparent 72%);
+        }
+
+        button, input, select { font: inherit; color: inherit; }
+        ::selection { color: white; background: var(--purple); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { border: 2px solid #090a13; border-radius: 20px; background: linear-gradient(#3a4a56, #262f36); }
+
+        .app { display: grid; grid-template-columns: 265px minmax(0, 1fr); min-height: 100vh; }
+
+        .sidebar {
+            position: fixed;
+            z-index: 50;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 265px;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            background:
+                radial-gradient(circle at 30% 0, rgba(34, 190, 220, 0.09), transparent 28%),
+                var(--sidebar);
+            backdrop-filter: blur(24px);
+            box-shadow: 24px 0 70px rgba(0, 0, 0, 0.16);
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; padding: 0 9px 30px; }
+
+        .brand-mark {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 14px;
+            background: linear-gradient(145deg, #38c6dd 0%, #2299bb 52%, #14647e 100%);
+            box-shadow: 0 14px 38px rgba(20, 130, 165, 0.4), inset 0 1px rgba(255, 255, 255, 0.24);
+        }
+
+        .brand-mark svg { width: 21px; height: 21px; color: #fff; }
+
+        .brand-title { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -0.045em; }
+        .brand-title span { color: #7fdcee; }
+
+        .brand-subtitle {
+            margin-top: 3px;
+            color: #7f879e;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .nav-label {
+            margin: 10px 12px 8px;
+            color: #5e657d;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+
+        .nav { display: grid; gap: 6px; }
+
+        .nav-item {
+            position: relative;
+            width: 100%;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 13px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            color: #9299ac;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .nav-item:hover { color: #eeeff6; border-color: rgba(255, 255, 255, 0.055); background: rgba(255, 255, 255, 0.04); }
+
+        .nav-item.active {
+            color: #fff;
+            border-color: rgba(60, 190, 215, 0.22);
+            background: linear-gradient(90deg, rgba(35, 180, 210, 0.2), rgba(35, 180, 210, 0.05));
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 10px 28px rgba(15, 90, 110, 0.16);
+        }
+
+        .nav-item.active::before {
+            position: absolute;
+            left: -16px;
+            width: 3px;
+            height: 24px;
+            content: "";
+            border-radius: 0 5px 5px 0;
+            background: linear-gradient(#7fdcee, #1d95b3);
+            box-shadow: 0 0 18px rgba(80, 195, 220, 0.8);
+        }
+
+        .nav-item i, .nav-item svg { width: 18px; height: 18px; stroke-width: 1.9; }
+
+        .nav-count {
+            margin-left: auto;
+            padding: 2px 7px;
+            border-radius: 20px;
+            color: #9adcf0;
+            background: rgba(35, 170, 205, 0.14);
+            font-size: 10px;
+        }
+
+        .sidebar-bottom { margin-top: auto; display: grid; gap: 10px; }
+
+        .sidebar-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            margin-right: -4px;
+            padding-right: 4px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+
+        .tool-card {
+            padding: 14px 15px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: radial-gradient(circle at 85% 0, rgba(35, 170, 205, 0.12), transparent 42%), rgba(255, 255, 255, 0.025);
+        }
+
+        .tool-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .tool-row:last-child { margin-bottom: 0; }
+        .tool-row strong { font-weight: 750; font-size: 10.5px; }
+
+        .dot-ok::before, .dot-off::before {
+            display: inline-block;
+            margin-right: 6px;
+            content: "";
+            border-radius: 50%;
+        }
+
+        .dot-ok::before { width: 7px; height: 7px; background: #34d399; box-shadow: 0 0 8px #34d399; }
+        .dot-off::before { width: 7px; height: 7px; background: #f87171; }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 9px;
+            border-radius: 14px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(100, 200, 225, 0.2);
+            border-radius: 12px;
+            color: #d5f2fa;
+            background: linear-gradient(145deg, rgba(35, 160, 195, 0.25), rgba(25, 40, 50, 0.7));
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .user-name { font-size: 12px; font-weight: 700; }
+        .user-role { margin-top: 3px; color: var(--muted); font-size: 10px; }
+
+        .main { grid-column: 2; min-width: 0; padding: 28px 34px 64px; }
+
+        .topbar {
+            position: sticky;
+            z-index: 40;
+            top: 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-height: 76px;
+            margin: -28px -34px 30px;
+            padding: 14px 34px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            background: linear-gradient(180deg, rgba(8, 10, 19, 0.92), rgba(8, 10, 19, 0.7));
+            backdrop-filter: blur(24px) saturate(130%);
+        }
+
+        .menu-btn { display: none; }
+
+        .search { position: relative; width: min(460px, 48vw); }
+
+        .search i, .search svg {
+            position: absolute;
+            z-index: 1;
+            top: 50%;
+            left: 14px;
+            width: 16px;
+            color: #858ca2;
+            transform: translateY(-50%);
+        }
+
+        .search input {
+            width: 100%;
+            height: 43px;
+            padding: 0 16px 0 42px;
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            outline: none;
+            border-radius: 13px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.032);
+            font-size: 12px;
+            transition: 0.2s ease;
+        }
+
+        .search input:focus {
+            border-color: rgba(90, 200, 230, 0.5);
+            box-shadow: 0 0 0 4px rgba(35, 170, 205, 0.09);
+        }
+
+        .search input::placeholder { color: #6f768a; }
+
+        .top-actions { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.075);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.032);
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .icon-btn:hover { border-color: var(--border-strong); background: rgba(31, 34, 53, 0.92); transform: translateY(-1px); }
+        .icon-btn i { width: 17px; }
+
+        .primary-btn, .secondary-btn, .ghost-btn {
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 15px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 750;
+            cursor: pointer;
+            transition: .18s ease;
+        }
+
+        .primary-btn {
+            min-height: 43px;
+            padding-inline: 17px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            background: linear-gradient(145deg, #46c8de, #2094b6 58%, #14708f);
+            box-shadow: 0 13px 34px rgba(20, 110, 140, 0.32), inset 0 1px rgba(255, 255, 255, 0.22);
+        }
+
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 44px rgba(20, 110, 140, 0.42); }
+
+        .secondary-btn {
+            border: 1px solid var(--border);
+            color: #d7dce4;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .secondary-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+        .ghost-btn {
+            min-height: 32px;
+            padding-inline: 10px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: var(--muted);
+            background: transparent;
+        }
+
+        .ghost-btn:hover { color: #d8dfe8; border-color: rgba(90, 190, 220, 0.16); background: rgba(35, 170, 205, 0.07); }
+
+        .primary-btn i, .secondary-btn i, .ghost-btn i, .run-btn i { width: 15px; }
+
+        .page { display: none; width: 100%; max-width: 1500px; margin-inline: auto; animation: pageIn .32s ease; }
+        .page.active { display: block; }
+
+        @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .page-header {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+            padding-bottom: 4px;
+        }
+
+        .page-header::after {
+            position: absolute;
+            right: 0;
+            bottom: -12px;
+            left: 0;
+            height: 1px;
+            content: "";
+            opacity: 0.8;
+            background: linear-gradient(90deg, rgba(80, 190, 220, 0.22), rgba(255, 255, 255, 0.045) 42%, transparent);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 9px;
+            padding: 5px 9px;
+            border: 1px solid rgba(90, 190, 220, 0.18);
+            border-radius: 999px;
+            color: #86d8ec;
+            background: linear-gradient(90deg, rgba(35, 170, 205, 0.11), rgba(35, 170, 205, 0.03));
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: clamp(28px, 3.2vw, 39px);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -.052em;
+            background: linear-gradient(112deg, #fff 12%, #e2f3f8 52%, #7fd0e4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .page-description {
+            max-width: 660px;
+            margin-top: 10px;
+            color: #9ca3b5;
+            font-size: 13px;
+            line-height: 1.75;
+        }
+
+        .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            min-height: 146px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            background:
+                linear-gradient(150deg, rgba(255, 255, 255, 0.047), transparent 46%),
+                rgba(15, 17, 29, 0.72);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.035), 0 20px 55px rgba(0, 0, 0, 0.17);
+            transition: .25s ease;
+        }
+
+        .stat-card::before {
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 2px;
+            content: "";
+            opacity: 0.8;
+            background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color) 78%, white), transparent);
+        }
+
+        .stat-card::after {
+            position: absolute;
+            z-index: -1;
+            right: -30px;
+            bottom: -50px;
+            width: 125px;
+            height: 125px;
+            content: "";
+            border-radius: 50%;
+            background: var(--glow);
+            filter: blur(8px);
+            opacity: 0.16;
+        }
+
+        .stat-card:hover { border-color: color-mix(in srgb, var(--color) 28%, rgba(255, 255, 255, 0.1)); transform: translateY(-4px); }
+
+        .stat-top { display: flex; align-items: center; justify-content: space-between; }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid color-mix(in srgb, var(--color) 18%, transparent);
+            border-radius: 12px;
+            color: var(--color);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--color) 18%, transparent), rgba(255, 255, 255, 0.015));
+        }
+
+        .stat-value { margin-top: 18px; font-size: 27px; font-weight: 800; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+        .stat-label { margin-top: 8px; color: #969db1; font-size: 11px; font-weight: 600; }
+
+        .trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 7px;
+            border: 1px solid rgba(34, 197, 94, 0.14);
+            border-radius: 8px;
+            color: #65dd8b;
+            background: rgba(34, 197, 94, 0.1);
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .trend.warn { color: #fbbf58; border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.09); }
+        .trend.off { color: #ff8b99; border-color: rgba(239, 68, 68, 0.22); background: rgba(239, 68, 68, 0.09); }
+
+        .panel {
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            background:
+                linear-gradient(150deg, rgba(255, 255, 255, 0.047), transparent 46%),
+                rgba(15, 17, 29, 0.76);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.035), 0 20px 55px rgba(0, 0, 0, 0.17);
+            backdrop-filter: blur(18px);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 67px;
+            padding: 17px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+            background: linear-gradient(90deg, rgba(35, 170, 205, 0.04), transparent 42%);
+        }
+
+        .panel-title { color: #f5f5fa; font-size: 14px; font-weight: 800; letter-spacing: -.025em; }
+        .panel-subtitle { margin-top: 4px; color: #979fb6; font-size: 11px; }
+        .panel-body { padding: 20px; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .activity-list { display: grid; }
+
+        .activity {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) auto;
+            gap: 11px;
+            align-items: center;
+            margin: 0 -8px;
+            padding: 13px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+            border-radius: 10px;
+            transition: .18s ease;
+        }
+
+        .activity:last-child { border-bottom: 0; }
+        .activity:hover { border-bottom-color: transparent; background: rgba(35, 170, 205, 0.055); transform: translateX(2px); }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.055);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.035);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .activity-title { overflow: hidden; font-size: 11.5px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+        .activity-detail { margin-top: 4px; overflow: hidden; color: #858da3; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .03em;
+            white-space: nowrap;
+        }
+
+        .status.success { color: #62dc8a; background: rgba(34, 197, 94, 0.09); }
+        .status.running { color: #61c7ff; background: rgba(59, 130, 246, 0.1); }
+        .status.failed, .status.dead, .status.open, .status.error { color: #ff7979; background: rgba(239, 68, 68, 0.1); }
+        .status.paused, .status.created, .status.warning { color: #fbbf58; background: rgba(245, 158, 11, 0.1); }
+        .status.exited { color: #a3abc0; background: rgba(148, 163, 184, 0.1); }
+        .status.info { color: #93c5fd; background: rgba(96, 165, 250, 0.12); }
+        .status.available { color: #ffb264; background: rgba(251, 146, 60, 0.13); }
+        .status.updating { color: #7fdcee; background: rgba(34, 190, 220, 0.12); }
+        .status.unknown { color: #a3abc0; background: rgba(148, 163, 184, 0.12); }
+
+        .pulse-dot { animation: pulseDot 1.4s ease-in-out infinite; }
+        @keyframes pulseDot { 50% { opacity: .35; } }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+            max-width: 100%;
+            margin-bottom: 16px;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.065);
+            border-radius: 14px;
+            background: rgba(14, 16, 28, 0.72);
+        }
+
+        .filter-select {
+            min-width: 150px;
+            height: 38px;
+            padding: 0 34px 0 13px;
+            border: 1px solid transparent;
+            outline: none;
+            border-radius: 9px;
+            color: #c7cbd8;
+            background-color: rgba(255, 255, 255, 0.035);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        .filter-select option { color: #e9eaf2; background: #151725; }
+        select.input { background-color: #171a29; color-scheme: dark; }
+        select.input option { color: #e9eaf2; background: #151725; }
+
+        .card-grid { display: grid; grid-template-columns: repeat(3, minmax(260px, 1fr)); gap: 16px; }
+
+        .op-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 280px;
+            overflow: hidden;
+            isolation: isolate;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 19px;
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.047), transparent 46%),
+                rgba(15, 17, 29, 0.76);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.035), 0 20px 55px rgba(0, 0, 0, 0.17);
+            transition: .25s ease;
+        }
+
+        .op-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--metric-color, #46c8de) 80%, white), transparent);
+            opacity: .55;
+        }
+
+        .op-card:hover {
+            border-color: color-mix(in srgb, var(--metric-color, #46c8de) 30%, rgba(255, 255, 255, 0.1));
+            transform: translateY(-4px);
+            box-shadow: 0 28px 75px rgba(0, 0, 0, 0.28);
+        }
+
+        .op-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+        .op-badge {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border-radius: 13px;
+        }
+
+        .op-badge svg { width: 20px; height: 20px; }
+
+        .op-primary { min-width: 0; flex: 1; }
+
+        .op-primary h3 {
+            overflow: hidden;
+            color: #f6f6fb;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.35;
+            letter-spacing: -.025em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .op-sub {
+            max-width: 100%;
+            margin-top: 4px;
+            overflow: hidden;
+            color: #858da1;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 9.5px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .job-menu {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            margin-left: auto;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: #8c94a8;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .job-menu:hover { color: #ff8794; border-color: rgba(239, 68, 68, 0.17); background: rgba(239, 68, 68, 0.075); }
+        .job-menu svg { width: 16px; height: 16px; }
+
+        .op-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+
+        .op-meta>div {
+            min-width: 0;
+            padding: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.055);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.022);
+        }
+
+        .op-meta span {
+            display: block;
+            margin-bottom: 6px;
+            color: #777f94;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .op-meta strong {
+            display: block;
+            overflow: hidden;
+            color: #e8e9f0;
+            font-size: 10px;
+            font-weight: 750;
+            line-height: 1.5;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .op-strip {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px 11px;
+            border: 1px solid rgba(255, 255, 255, 0.055);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.016);
+            font-size: 9px;
+        }
+
+        .strip-icon {
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border-radius: 7px;
+            background: rgba(35, 170, 205, 0.1);
+            color: #8fdcef;
+        }
+
+        .strip-icon svg { width: 12px; height: 12px; }
+
+        .strip-copy { min-width: 0; overflow: hidden; flex: 1; color: #b5bbc9; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+
+        .mini-chip {
+            flex: 0 0 auto;
+            padding: 3px 7px;
+            border-radius: 6px;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .chip-ahead { color: #7fd0a8; background: rgba(52, 211, 153, 0.13); }
+        .chip-behind { color: #fbbf58; background: rgba(245, 158, 11, 0.13); }
+        .chip-dirty { color: #ff9caa; background: rgba(244, 63, 94, 0.12); }
+        .chip-clean { color: #93c5fd; background: rgba(96, 165, 250, 0.12); }
+
+        .op-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .job-controls { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .run-btn {
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 0 11px;
+            border: 1px solid rgba(35, 170, 205, 0.28);
+            border-radius: 9px;
+            color: #a8dff0;
+            background: rgba(35, 170, 205, 0.09);
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .18s ease;
+        }
+
+        .run-btn:hover { transform: translateY(-1px); background: rgba(35, 170, 205, 0.17); }
+        .run-btn svg { width: 11px; height: 11px; }
+
+        .run-btn.is-busy { color: #a9cfff; border-color: rgba(86, 181, 255, 0.26); cursor: wait; }
+        .run-btn.is-busy svg { animation: spin 1s linear infinite; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .danger-action { color: #ff9caa; border-color: rgba(244, 63, 94, 0.25); }
+        .danger-action:hover { color: #fff; border-color: rgba(244, 63, 94, 0.52); background: rgba(244, 63, 94, 0.22); }
+        .green-action { color: #8be6ac; border-color: rgba(34, 197, 94, 0.28); background: rgba(34, 197, 94, 0.08); }
+        .green-action:hover { background: rgba(34, 197, 94, 0.16); }
+        .amber-action { color: #ffd08a; border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.08); }
+        .amber-action:hover { background: rgba(245, 158, 11, 0.16); }
+
+        .card-grid>.empty-state { grid-column: 1 / -1; }
+
+        /* Tables */
+
+        .table-wrap { overflow-x: auto; border-radius: 0 0 17px 17px; }
+
+        table { width: 100%; min-width: 720px; border-collapse: collapse; white-space: nowrap; }
+
+        th {
+            padding: 14px 16px;
+            color: #8b92a6;
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .09em;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        td { padding: 15px 16px; border-top: 1px solid rgba(255, 255, 255, 0.055); color: #e3e5ef; font-size: 11px; }
+
+        tbody tr { transition: background .18s ease, box-shadow .18s ease; }
+        tbody tr:hover { background: rgba(35, 170, 205, 0.05); box-shadow: inset 3px 0 #46c8de; }
+
+        .mono { font-family: ui-monospace, Consolas, monospace; font-size: 10px; }
+
+        /* Modal */
+
+        .modal-backdrop {
+            position: fixed;
+            z-index: 100;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(3, 5, 12, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-backdrop.show { display: flex; animation: fade .2s ease; }
+
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal {
+            width: min(680px, 100%);
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(90, 190, 220, 0.22);
+            border-radius: 20px;
+            background: #11141f;
+            box-shadow: 0 36px 100px rgba(0, 0, 0, 0.55);
+            animation: modalIn .25s ease;
+        }
+
+        .modal.wide { width: min(900px, 100%); }
+
+        @keyframes modalIn { from { opacity: 0; transform: scale(.97) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(120deg, rgba(35, 170, 205, 0.08), transparent 55%);
+        }
+
+        .modal-header h2 { font-size: 19px; font-weight: 800; letter-spacing: -.035em; }
+        .modal-header p { margin-top: 4px; color: var(--muted); font-size: 10px; }
+
+        .modal-content { overflow-y: auto; padding: 22px; }
+
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 9px;
+            padding: 15px 22px;
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a9b0c3;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .085em;
+        }
+
+        .input {
+            width: 100%;
+            height: 45px;
+            padding: 0 14px;
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            outline: none;
+            border-radius: 11px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.032);
+            font-size: 11.5px;
+            transition: .2s ease;
+        }
+
+        .input:focus { border-color: rgba(90, 190, 220, 0.55); box-shadow: 0 0 0 4px rgba(35, 170, 205, 0.1); }
+        .input::placeholder { color: #666e84; }
+
+        .hint-text { margin-top: 7px; color: #7d8598; font-size: 9.5px; line-height: 1.6; }
+
+        /* Log viewer */
+
+        .preset-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .preset-chip {
+            padding: 8px 11px;
+            border: 1px solid rgba(90, 190, 220, 0.2);
+            border-radius: 9px;
+            color: #a8dff0;
+            background: rgba(35, 170, 205, 0.07);
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 9.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .15s ease;
+        }
+
+        .preset-chip:hover { border-color: rgba(90, 190, 220, 0.5); background: rgba(35, 170, 205, 0.16); transform: translateY(-1px); }
+
+        .preset-chip.active-mode {
+            color: #eafcff;
+            border-color: rgba(90, 190, 220, 0.65);
+            background: rgba(35, 170, 205, 0.24);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        #cronBuilderFields .input,
+        #cronBuilderFields select.input {
+            height: 42px;
+        }
+
+        .preview-box {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            border-radius: 12px;
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        .preview-box strong { display: block; color: #8be6ac; font-size: 12px; font-weight: 800; }
+        .preview-box span { display: block; margin-top: 6px; color: #9aa3b8; font-size: 10px; line-height: 1.7; }
+
+        .log-viewer {
+            max-height: 420px;
+            overflow: auto;
+            padding: 14px 16px;
+            border-radius: 13px;
+            background: #07090f;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+            font-size: 10.5px;
+            line-height: 1.65;
+            color: #b9c6cf;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            padding: 4px;
+            width: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 11px;
+            background: rgba(14, 16, 28, 0.72);
+        }
+
+        .tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 34px;
+            padding: 0 13px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--muted);
+            background: transparent;
+            font-size: 10.5px;
+            font-weight: 750;
+            cursor: pointer;
+            transition: .15s ease;
+        }
+
+        .tab-btn svg { width: 13px; height: 13px; }
+        .tab-btn:hover { color: #dfe6ee; }
+
+        .tab-btn.active {
+            color: #dff3f9;
+            border-color: rgba(90, 190, 220, 0.28);
+            background: rgba(35, 170, 205, 0.15);
+        }
+
+        .console-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+
+        .cron-cmd {
+            white-space: normal !important;
+            word-break: break-all;
+            max-width: 430px;
+            font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+            font-size: 9.5px;
+            line-height: 1.7;
+            color: #ccd5dd;
+        }
+
+        .stats-grid-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px; margin-bottom: 16px; }
+
+        .stat-mini {
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .stat-mini span { display: block; margin-bottom: 6px; color: #777f94; font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .stat-mini strong { color: #eef1f6; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+        .branch-list { display: grid; gap: 7px; }
+
+        .branch-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: .18s ease;
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+
+        .branch-item:hover { border-color: rgba(90, 190, 220, 0.4); background: rgba(35, 170, 205, 0.07); transform: translateX(2px); }
+        .branch-item.current { border-color: rgba(52, 211, 153, 0.4); cursor: default; }
+        .branch-item .mono { color: #8f97ab; font-weight: 600; }
+        #browseCrumbs .crumb { cursor: pointer; color: #8fdcef; font-weight: 700; }
+        #browseCrumbs .crumb:hover { text-decoration: underline; }
+
+        .commit-list { display: grid; gap: 4px; }
+
+        .commit-item {
+            display: grid;
+            grid-template-columns: 74px 110px minmax(0, 1fr);
+            gap: 12px;
+            align-items: baseline;
+            padding: 11px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 10.5px;
+        }
+
+        .commit-item:last-child { border-bottom: 0; }
+        .commit-hash { color: #7fd0e4; font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
+        .commit-author { overflow: hidden; color: #a3abc0; text-overflow: ellipsis; white-space: nowrap; }
+        .commit-msg { overflow: hidden; color: #e6e9f1; text-overflow: ellipsis; white-space: nowrap; }
+        .commit-time { grid-column: 2; color: #6d7488; font-size: 9px; }
+
+        /* Settings */
+
+        .provider-settings {
+            position: relative;
+            overflow: hidden;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 17px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, .04), transparent 44%), rgba(11, 14, 25, .52);
+            box-shadow: inset 0 1px rgba(255, 255, 255, .035), 0 16px 40px rgba(0, 0, 0, .12);
+        }
+
+        .settings-section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .provider-heading { display: flex; align-items: center; gap: 13px; min-width: 0; }
+        .provider-heading p { margin: 5px 0 0; color: #979fb6; font-size: 11.5px; line-height: 1.7; }
+
+        .provider-mark {
+            display: grid;
+            place-items: center;
+            flex: 0 0 46px;
+            width: 46px;
+            height: 46px;
+            border: 1px solid rgba(90, 190, 220, 0.24);
+            border-radius: 14px;
+            color: #a8e2f2;
+            background: linear-gradient(145deg, rgba(35, 170, 205, 0.2), rgba(35, 170, 205, 0.05));
+        }
+
+        .provider-mark svg { width: 20px; height: 20px; }
+
+        .provider-badge {
+            flex: 0 0 auto;
+            padding: 7px 11px;
+            border: 1px solid rgba(90, 190, 220, 0.2);
+            border-radius: 999px;
+            color: #a8dff0;
+            background: rgba(35, 170, 205, 0.08);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-top: 18px; }
+        .field.full { grid-column: 1 / -1; }
+
+        .settings-stack { display: grid; gap: 18px; }
+
+        /* Toast */
+
+        .toast-container { position: fixed; z-index: 200; right: 22px; bottom: 22px; display: grid; gap: 10px; }
+
+        .toast {
+            width: min(340px, calc(100vw - 44px));
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid rgba(90, 190, 220, 0.2);
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(35, 170, 205, 0.07), transparent 45%), rgba(17, 20, 33, 0.96);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.045);
+            animation: toastIn .28s ease;
+        }
+
+        @keyframes toastIn { from { opacity: 0; transform: translateX(25px); } to { opacity: 1; transform: translateX(0); } }
+
+        .toast-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            color: #67e18f;
+            background: rgba(34, 197, 94, 0.12);
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .toast-title { font-size: 11px; font-weight: 800; }
+        .toast-message { margin-top: 3px; color: var(--muted); font-size: 9.5px; line-height: 1.55; }
+
+        .toast-close { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 15px; }
+
+        /* Empty states */
+
+        .empty-state {
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 26px;
+            border: 1px dashed rgba(90, 190, 220, 0.22);
+            border-radius: 20px;
+            text-align: center;
+            background: radial-gradient(circle at 50% 8%, rgba(35, 170, 205, 0.09), transparent 44%), rgba(255, 255, 255, 0.012);
+        }
+
+        .empty-state.compact { min-height: 160px; border: 0; border-radius: 0; background: transparent; padding: 26px 18px; }
+
+        .empty-icon {
+            width: 54px;
+            height: 54px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 18px;
+            border: 1px solid rgba(90, 190, 220, 0.25);
+            border-radius: 17px;
+            color: #9adcf0;
+            background: linear-gradient(145deg, rgba(35, 170, 205, 0.18), rgba(35, 170, 205, 0.05));
+        }
+
+        .empty-icon svg { width: 23px; height: 23px; }
+
+        .empty-state.is-loading .empty-icon svg { animation: spin 1.05s linear infinite; }
+
+        .empty-state.is-error .empty-icon { color: #ff8b9a; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.07); }
+        .empty-state.is-error { border-style: solid; }
+
+        .empty-state h3 { color: #f2f3f9; font-size: 15px; font-weight: 800; letter-spacing: -.03em; }
+        .empty-state p { max-width: 430px; margin-top: 8px; color: #8f97ab; font-size: 11px; line-height: 1.7; }
+
+        td .empty-state { min-height: 200px; border: 0; background: transparent; }
+
+        /* Info page */
+
+        .info-hero {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(270px, 0.65fr);
+            gap: 28px;
+            overflow: hidden;
+            padding: 34px;
+            border: 1px solid rgba(90, 190, 220, 0.24);
+            border-radius: 22px;
+            background:
+                radial-gradient(circle at 91% 12%, rgba(35, 170, 205, 0.24), transparent 35%),
+                linear-gradient(135deg, rgba(35, 170, 205, 0.1), rgba(13, 15, 27, 0.85) 52%);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.065), 0 30px 85px rgba(0, 0, 0, 0.24);
+        }
+
+        .info-product-mark {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            color: #fff;
+            background: linear-gradient(145deg, #46c8de, #14708f);
+            box-shadow: 0 14px 34px rgba(20, 110, 140, 0.35);
+        }
+
+        .info-kicker { margin-bottom: 9px; color: #86d8ec; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+
+        .info-product h2 { max-width: 650px; font-size: clamp(25px, 3vw, 36px); font-weight: 800; line-height: 1.16; letter-spacing: -.05em; }
+
+        .info-lead { max-width: 680px; margin-top: 15px; color: #a8afc1; font-size: 13px; line-height: 1.8; }
+
+        .info-meta { align-self: end; display: grid; gap: 10px; }
+
+        .info-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 13px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .info-meta-row:last-child { border-bottom: 0; }
+        .info-meta-row span { color: #858da3; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+        .info-meta-row strong { color: #eef0f8; font-size: 11px; font-weight: 750; text-align: right; }
+
+        .info-capabilities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+
+        .info-capability {
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: rgba(15, 18, 31, 0.68);
+            transition: .2s ease;
+        }
+
+        .info-capability:hover { border-color: rgba(90, 190, 220, 0.25); }
+
+        .info-capability-icon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 18px;
+            border: 1px solid rgba(90, 190, 220, 0.2);
+            border-radius: 12px;
+            color: #9adcf0;
+            background: rgba(35, 170, 205, 0.1);
+        }
+
+        .info-capability-icon svg { width: 18px; height: 18px; }
+        .info-capability h3 { font-size: 14px; font-weight: 800; letter-spacing: -.025em; }
+        .info-capability p { margin-top: 9px; color: #929aae; font-size: 11px; line-height: 1.75; }
+
+        .info-flow { padding: 24px; border: 1px solid var(--border); border-radius: 18px; background: rgba(15, 18, 31, 0.68); }
+
+        .info-flow-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+        .info-flow-header h3 { font-size: 15px; font-weight: 800; }
+        .info-flow-header p { color: #858da3; font-size: 10px; }
+
+        .info-flow-steps { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+        .info-step { position: relative; padding: 0 20px; border-left: 1px solid var(--border); }
+        .info-step:first-child { padding-left: 0; border-left: 0; }
+
+        .feat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(252px, 1fr)); gap: 14px; }
+
+        .feat-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 17px;
+            background: rgba(15, 18, 31, 0.55);
+        }
+        .feat-card h3 {
+            display: flex; align-items: center; gap: 9px;
+            font-size: 12.5px; font-weight: 800; color: #eef1f6; letter-spacing: -.01em;
+        }
+        .feat-card h3 svg { width: 16px; height: 16px; color: #38c6dd; flex: none; }
+        .feat-card ul { margin-top: 10px; }
+        .feat-card li { position: relative; padding-left: 15px; color: #99a1b5; font-size: 10.8px; line-height: 2; list-style: none; }
+        .feat-card li::before { content: "▸"; position: absolute; left: 0; color: #2fa8c9; }
+
+        .guide-list { display: grid; }
+        .guide-step { display: flex; gap: 13px; align-items: flex-start; padding: 13px 0; border-top: 1px dashed rgba(255, 255, 255, 0.08); }
+        .guide-step:first-child { border-top: 0; padding-top: 0; }
+        .guide-num {
+            flex: none; width: 27px; height: 27px; display: grid; place-items: center;
+            border-radius: 9px; background: rgba(35, 170, 205, 0.14);
+            border: 1px solid rgba(90, 190, 220, 0.28); color: #9adcf0;
+            font-size: 11px; font-weight: 800;
+        }
+        .guide-step strong { display: block; margin-bottom: 3px; color: #eef1f6; font-size: 12px; letter-spacing: -.01em; }
+        .guide-step p { color: #8b93a9; font-size: 11px; line-height: 1.7; }
+
+        .info-step-number { display: block; margin-bottom: 10px; color: #35b4d6; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+        .info-step strong { display: block; color: #eff0f7; font-size: 12px; font-weight: 800; }
+        .info-step p { margin-top: 6px; color: #858da3; font-size: 10px; line-height: 1.6; }
+
+        .info-privacy {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 17px 20px;
+            border: 1px solid rgba(34, 197, 94, 0.16);
+            border-radius: 15px;
+            color: #a9b1c3;
+            background: rgba(34, 197, 94, 0.045);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .info-privacy-icon {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            flex: 0 0 auto;
+            place-items: center;
+            border-radius: 11px;
+            color: #75df98;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        button:focus-visible, input:focus-visible, select:focus-visible {
+            outline: 2px solid rgba(90, 190, 220, 0.8);
+            outline-offset: 3px;
+        }
+
+        .mobile-overlay { position: fixed; z-index: 45; inset: 0; display: none; background: rgba(0, 0, 0, 0.58); }
+
+        @media (max-width: 1120px) {
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .card-grid { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+        }
+
+        @media (max-width: 900px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar { transform: translateX(-105%); transition: .3s ease; }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-overlay.show { display: block; }
+            .main { grid-column: 1; padding: 24px 22px 52px; }
+            .topbar { margin: -24px -22px 26px; padding: 12px 22px; }
+            .menu-btn { display: grid; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .info-hero { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 650px) {
+            h1 { font-size: 29px; }
+            .search { width: auto; flex: 1; }
+            .page-header { align-items: flex-start; flex-direction: column; }
+            .stats, .card-grid { grid-template-columns: 1fr; }
+            .toolbar { width: 100%; }
+            .filter-select { min-width: 0; flex: 1; }
+            .main { padding: 18px 15px 46px; }
+            .topbar { min-height: 68px; margin: -18px -15px 24px; padding: 11px 15px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .info-capabilities { grid-template-columns: 1fr; }
+            .info-flow-steps { grid-template-columns: 1fr 1fr; gap: 22px 0; }
+            .info-step:nth-child(3) { padding-left: 0; border-left: 0; }
+            .op-card:hover, .stat-card:hover { transform: none; }
+            .commit-item { grid-template-columns: 60px minmax(0, 1fr); }
+            .commit-author { grid-column: 1; }
+            .commit-msg { grid-column: 2; }
+            .commit-time { grid-column: 2; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand-mark">
+                    <i data-lucide="layers"></i>
+                </div>
+                <div>
+                    <div class="brand-title">Apira VPS<span>OpsDeck</span></div>
+                    <div class="brand-subtitle">Command every stack</div>
+                </div>
+            </div>
+
+            <div class="sidebar-scroll">
+
+            <div class="nav-label">Operations</div>
+
+            <nav class="nav">
+                <button class="nav-item active" data-page="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    Overview
+                </button>
+
+                <button class="nav-item" data-page="containers">
+                    <i data-lucide="container"></i>
+                    Containers
+                    <span class="nav-count" id="containerCount">0</span>
+                </button>
+
+                <button class="nav-item" data-page="images">
+                    <i data-lucide="hard-drive"></i>
+                    Images
+                </button>
+
+                <button class="nav-item" data-page="repos">
+                    <i data-lucide="git-branch"></i>
+                    Git Repositories
+                    <span class="nav-count" id="repoCount">0</span>
+                </button>
+
+                <button class="nav-item" data-page="cron">
+                    <i data-lucide="clock"></i>
+                    Scheduled Tasks
+                    <span class="nav-count" id="cronCount">0</span>
+                </button>
+
+                <button class="nav-item" data-page="screens">
+                    <i data-lucide="terminal"></i>
+                    Screen Sessions
+                    <span class="nav-count" id="screenCount">0</span>
+                </button>
+
+                <button class="nav-item" data-page="watchers">
+                    <i data-lucide="package-check"></i>
+                    Update Watchers
+                    <span class="nav-count danger" id="watcherCount">0</span>
+                </button>
+            </nav>
+
+            <div class="nav-label">System</div>
+
+            <nav class="nav">
+                <button class="nav-item" data-page="settings">
+                    <i data-lucide="settings-2"></i>
+                    Settings
+                </button>
+
+                <button class="nav-item" data-page="events">
+                    <i data-lucide="history"></i>
+                    Activity
+                </button>
+
+                <button class="nav-item" data-page="info">
+                    <i data-lucide="info"></i>
+                    Info
+                </button>
+            </nav>
+
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="tool-card">
+                    <div class="tool-row"><strong id="dockerTool">Docker · checking…</strong></div>
+                    <div class="tool-row"><strong id="gitTool">Git · checking…</strong></div>
+                </div>
+
+                <div class="user-card">
+                    <div class="avatar">SA</div>
+                    <div class="user-info">
+                        <div class="user-name">Server Admin</div>
+                        <div class="user-role">System Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+
+        <main class="main">
+            <header class="topbar">
+                <button class="icon-btn menu-btn" id="menuButton">
+                    <i data-lucide="menu"></i>
+                </button>
+
+                <div class="search">
+                    <i data-lucide="search"></i>
+                    <input id="globalSearch" type="text" placeholder="Search containers and repos…  (Ctrl+K)">
+                </div>
+
+                <div class="top-actions">
+                    <button class="icon-btn" id="refreshButton" title="Refresh current page">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+
+                    <button class="primary-btn" id="openRepoModal">
+                        <i data-lucide="plus"></i>
+                        Track repository
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+
+            <section class="page active" id="dashboard">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Operations overview</div>
+                        <h1 id="dashHeading">Welcome back</h1>
+                        <p class="page-description">
+                            Loading live container and repository state from this server.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" data-go-page="containers">
+                        <i data-lucide="container"></i>
+                        Open containers
+                    </button>
+                </div>
+
+                <div class="stats">
+                    <article class="stat-card" style="--color:#61c7ff; --glow:#2563eb">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="play"></i></div>
+                            <span class="trend" id="dockerTrend">Docker</span>
+                        </div>
+                        <div class="stat-value" id="statRunning">—</div>
+                        <div class="stat-label" id="runningLabel">Containers running</div>
+                    </article>
+
+                    <article class="stat-card" style="--color:#8be6ac; --glow:#10b981">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="hard-drive"></i></div>
+                            <span class="trend">Live</span>
+                        </div>
+                        <div class="stat-value" id="statImages">—</div>
+                        <div class="stat-label">Images on disk</div>
+                    </article>
+
+                    <article class="stat-card" style="--color:#fbbf58; --glow:#f59e0b">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="git-branch"></i></div>
+                            <span class="trend" id="gitTrend">Git</span>
+                        </div>
+                        <div class="stat-value" id="statRepos">—</div>
+                        <div class="stat-label">Repositories tracked</div>
+                    </article>
+
+                    <article class="stat-card" style="--color:#c084fc; --glow:#9333ea">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="clock"></i></div>
+                            <span class="trend" id="cronTrend">Cron</span>
+                        </div>
+                        <div class="stat-value" id="statCron">—</div>
+                        <div class="stat-label">Scheduled tasks active</div>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Recent activity</div>
+                                <div class="panel-subtitle">Latest container and git operations</div>
+                            </div>
+                            <button class="ghost-btn" data-go-page="events">View all</button>
+                        </div>
+                        <div class="activity-list" id="recentEvents" style="padding:6px 20px 12px">
+                            <div class="empty-state compact is-loading">
+                                <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                <h3>Loading activity</h3>
+                                <p>Retrieving the latest OpsDeck events.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Running containers</div>
+                                <div class="panel-subtitle">Quick control for live workloads</div>
+                            </div>
+                            <button class="ghost-btn" data-go-page="containers">Manage</button>
+                        </div>
+                        <div class="activity-list" id="runningList" style="padding:6px 20px 12px">
+                            <div class="empty-state compact is-loading">
+                                <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                <h3>Loading containers</h3>
+                                <p>Querying the Docker engine for running workloads.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- Containers -->
+
+            <section class="page" id="containers">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Docker engine</div>
+                        <h1>Containers</h1>
+                        <p class="page-description">
+                            Start, stop, restart or remove workloads and inspect their logs and resource usage.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" id="refreshContainers">
+                        <i data-lucide="refresh-cw"></i>
+                        Refresh list
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <select class="filter-select" id="stateFilter">
+                        <option value="all">All states</option>
+                        <option value="running">Running</option>
+                        <option value="paused">Paused</option>
+                        <option value="exited">Exited</option>
+                    </select>
+                </div>
+
+                <div class="card-grid" id="containersGrid"></div>
+            </section>
+
+            <!-- Images -->
+
+            <section class="page" id="images">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Registry cache</div>
+                        <h1>Images</h1>
+                        <p class="page-description">
+                            Local images pulled or built by the Docker engine. Deleting frees disk space.
+                        </p>
+                    </div>
+
+                    <button class="ghost-btn danger-action" id="pruneImages" style="height:40px;border:1px solid rgba(244,63,94,.25);border-radius:12px">
+                        <i data-lucide="eraser"></i>
+                        Prune dangling images
+                    </button>
+                </div>
+
+                <section class="panel">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Repository</th>
+                                    <th>Tag</th>
+                                    <th>ID</th>
+                                    <th>Created</th>
+                                    <th>Size</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="imagesBody">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state is-loading">
+                                            <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                            <h3>Loading images</h3>
+                                            <p>Querying local image storage.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Repos -->
+
+            <section class="page" id="repos">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Source control</div>
+                        <h1>Git repositories</h1>
+                        <p class="page-description">
+                            Track server-side checkouts: review status, switch branches and pull updates safely.
+                        </p>
+                    </div>
+
+                    <button class="primary-btn" data-open-repo-modal>
+                        <i data-lucide="plus"></i>
+                        Track repository
+                    </button>
+                </div>
+
+                <div class="card-grid" id="reposGrid"></div>
+            </section>
+
+            <!-- Cron -->
+
+            <section class="page" id="cron">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Automation</div>
+                        <h1>Scheduled tasks</h1>
+                        <p class="page-description">
+                            The server crontab, human-readable: edit expressions, toggle tasks without losing them
+                            and run any job on demand. Deleted or wiped tasks stay archived in the database —
+                            restore them with one click.
+                        </p>
+                    </div>
+
+                    <button class="primary-btn" data-open-cron-modal>
+                        <i data-lucide="plus"></i>
+                        New scheduled task
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <select class="filter-select" id="cronFilter">
+                        <option value="all">All tasks</option>
+                        <option value="enabled">Enabled only</option>
+                        <option value="disabled">Disabled only</option>
+                        <option value="invalid">Invalid entries</option>
+                        <option value="deleted">Deleted tasks</option>
+                    </select>
+
+                    <button class="ghost-btn" id="refreshCron">
+                        <i data-lucide="refresh-cw"></i>
+                        Reload crontab
+                    </button>
+                </div>
+
+                <section class="panel">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Schedule</th>
+                                    <th>Next run</th>
+                                    <th>Command</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cronBody">
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state is-loading">
+                                            <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                            <h3>Loading crontab</h3>
+                                            <p>Reading the current user's scheduled tasks.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Screens -->
+
+            <section class="page" id="screens">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Terminal multiplexer</div>
+                        <h1>Screen sessions</h1>
+                        <p class="page-description">
+                            GNU screen sessions running on this server: read the live buffer, type into the
+                            terminal, start new detached sessions and close the ones you no longer need.
+                            Previously seen sessions stay in the local database — re-enable, restart or forget them.
+                        </p>
+                    </div>
+
+                    <button class="primary-btn" id="openScreenModal">
+                        <i data-lucide="plus"></i>
+                        New screen session
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <select class="filter-select" id="screenFilter">
+                        <option value="all">All sessions</option>
+                        <option value="detached">Detached only</option>
+                        <option value="attached">Attached only</option>
+                        <option value="dead">Dead only</option>
+                    </select>
+
+                    <button class="ghost-btn" id="refreshScreens">
+                        <i data-lucide="refresh-cw"></i>
+                        Reload list
+                    </button>
+                </div>
+
+                <section class="panel">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Session</th>
+                                    <th>PID</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="screensBody">
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state is-loading">
+                                            <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                            <h3>Loading sessions</h3>
+                                            <p>Listing the screen sockets of this user.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Watchers -->
+
+            <section class="page" id="watchers">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Release tracking</div>
+                        <h1>Update watchers</h1>
+                        <p class="page-description">
+                            Track GitHub releases of the tools installed on this server. When an update appears,
+                            OpsDeck downloads the matching asset, verifies its checksum, backs up the current
+                            binary and replaces it atomically — rolling back automatically if verification fails.
+                        </p>
+                    </div>
+
+                    <button class="primary-btn" data-open-watcher-modal>
+                        <i data-lucide="plus"></i>
+                        Add watcher
+                    </button>
+                </div>
+
+                <div class="toolbar">
+                    <select class="filter-select" id="watcherFilter">
+                        <option value="all">All watchers</option>
+                        <option value="available">Updates available</option>
+                        <option value="ok">Up to date</option>
+                        <option value="error">Errors</option>
+                    </select>
+
+                    <button class="ghost-btn" id="refreshWatchers">
+                        <i data-lucide="refresh-cw"></i>
+                        Refresh
+                    </button>
+                </div>
+
+                <div class="card-grid" id="watchersGrid"></div>
+            </section>
+
+            <!-- Events -->
+
+            <section class="page" id="events">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Audit trail</div>
+                        <h1>Activity log</h1>
+                        <p class="page-description">
+                            Every container action, git sync and configuration change is recorded here.
+                        </p>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Level</th>
+                                    <th>Event</th>
+                                    <th>Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsBody">
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state is-loading">
+                                            <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                            <h3>Loading activity</h3>
+                                            <p>Retrieving the audit trail.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Settings -->
+
+            <section class="page" id="settings">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Preferences</div>
+                        <h1>OpsDeck settings</h1>
+                        <p class="page-description">
+                            Point the panel at custom CLI locations and tune output limits.
+                        </p>
+                    </div>
+
+                    <button class="primary-btn" id="saveSettings">
+                        <i data-lucide="save"></i>
+                        Save settings
+                    </button>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Toolchain</div>
+                            <div class="panel-subtitle">Leave blank to use the binaries found in PATH</div>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" id="settingsBody" style="visibility:hidden">
+                        <div class="empty-state is-loading">
+                            <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                            <h3>Loading settings</h3>
+                            <p>Retrieving your saved toolchain configuration.</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Info -->
+
+            <section class="page" id="info">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Product information</div>
+                        <h1>Everything OpsDeck can do</h1>
+                        <p class="page-description">The full feature list of this panel plus a quick guide — maintained by Apira VPS.</p>
+                    </div>
+                </div>
+
+                <div class="info-shell" style="display:grid;gap:18px">
+                    <section class="info-hero">
+                        <div>
+                            <div class="info-product-mark"><i data-lucide="layers"></i></div>
+                            <div class="info-kicker">Apira VPS OpsDeck</div>
+                            <h2>One panel for containers, git, automation and terminal sessions.</h2>
+                            <p class="info-lead">OpsDeck drives the real docker, git, crontab and screen CLIs of this
+                                server. Everything runs locally, destructive actions need typed confirmations and
+                                every operation lands in the activity trail.</p>
+                        </div>
+
+                        <div class="info-meta">
+                            <div class="info-meta-row"><span>Version</span><strong id="infoVersion">checking…</strong></div>
+                            <div class="info-meta-row"><span>Docker engine</span><strong id="infoDockerTool">checking…</strong></div>
+                            <div class="info-meta-row"><span>Git engine</span><strong id="infoGitTool">checking…</strong></div>
+                        </div>
+                    </section>
+
+                    <div class="feat-grid">
+                        <article class="feat-card">
+                            <h3><i data-lucide="layout-dashboard"></i>Overview dashboard</h3>
+                            <ul>
+                                <li>Live container states: running · stopped · paused</li>
+                                <li>Counters for images, repos, tasks and screens</li>
+                                <li>Pending update badge from watchers</li>
+                                <li>Recent activity feed and tool health (Docker / Git)</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="container"></i>Container control</h3>
+                            <ul>
+                                <li>List with status filter and global search</li>
+                                <li>Start · stop · restart · remove (typed confirm)</li>
+                                <li>Log tail 50–5000 lines + download .txt</li>
+                                <li>CPU / memory / network / block I/O snapshot</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="terminal"></i>Inside container</h3>
+                            <ul>
+                                <li>Clickable file browser — no typing needed</li>
+                                <li>Breadcrumb navigation + quick-jump folders</li>
+                                <li>Click a file to tail it; head &amp; list modes too</li>
+                                <li>Run any shell command through sh -c</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="hard-drive"></i>Images</h3>
+                            <ul>
+                                <li>Full image list with size and age</li>
+                                <li>Delete a single image with typed confirmation</li>
+                                <li>Prune dangling images to reclaim disk space</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="git-branch"></i>Git repositories</h3>
+                            <ul>
+                                <li>Track up to 32 checkouts on this server</li>
+                                <li>Branch, dirty files, ahead/behind at a glance</li>
+                                <li>Working-tree diff viewer and recent commits</li>
+                                <li>Switch branches, fetch remotes, safe pull --ff-only</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="clock"></i>Scheduled tasks</h3>
+                            <ul>
+                                <li>Human-readable crontab editor</li>
+                                <li>Schedule builder with next-run preview</li>
+                                <li>Edit · toggle · run now with live output</li>
+                                <li>Deleted tasks stay in DB — Restore or Delete forever</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="scroll"></i>Screen sessions</h3>
+                            <ul>
+                                <li>List live GNU screen sessions by state</li>
+                                <li>Read the buffer incl. scrollback per window</li>
+                                <li>Type into a session; start new detached ones</li>
+                                <li>Kill safely; previous sessions restorable from DB</li>
+                                <li>Enable/disable lock per session</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="package-check"></i>Update watchers</h3>
+                            <ul>
+                                <li>Track GitHub releases of up to 24 tools</li>
+                                <li>Asset name pattern + pre-release opt-in</li>
+                                <li>Checksum verify → backup → replace → restart</li>
+                                <li>Automatic rollback if a downgrade is detected</li>
+                            </ul>
+                        </article>
+                        <article class="feat-card">
+                            <h3><i data-lucide="history"></i>Activity &amp; safety</h3>
+                            <ul>
+                                <li>Audit trail of the last 200 operations</li>
+                                <li>Destructive actions require typed phrases</li>
+                                <li>Strict argument validation everywhere</li>
+                                <li>Tokens encrypted at rest; nothing leaves the server</li>
+                            </ul>
+                        </article>
+                    </div>
+
+                    <section class="info-flow">
+                        <div class="info-flow-header">
+                            <h3>Quick guide</h3>
+                            <p>Six steps to run your whole stack from here</p>
+                        </div>
+                        <div class="guide-list">
+                            <div class="guide-step">
+                                <span class="guide-num">01</span>
+                                <div>
+                                    <strong>Inspect your containers</strong>
+                                    <p>Open Containers → View &amp; interact: logs, stats and shell in one modal.
+                                        Switch to the Inside container tab and click through files instead of
+                                        typing paths — clicking a log file tails it instantly.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="guide-num">02</span>
+                                <div>
+                                    <strong>Track a repository</strong>
+                                    <p>Git Repositories → add an absolute path containing .git. Review dirty files
+                                        and diffs first, then Fetch or Pull with fast-forward-only protection.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="guide-num">03</span>
+                                <div>
+                                    <strong>Automate with scheduled tasks</strong>
+                                    <p>Build a cron schedule without memorizing syntax and preview its next runs.
+                                        Deleted tasks are archived automatically — bring one back anytime with
+                                        Restore, or wipe it permanently with Delete forever.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="guide-num">04</span>
+                                <div>
+                                    <strong>Keep long jobs in screen sessions</strong>
+                                    <p>Start a detached session for workers or watch jobs, read their live buffer
+                                        and send commands from the panel. Sessions seen before stay saved in the
+                                        database — enable, restart or forget them whenever you like.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="guide-num">05</span>
+                                <div>
+                                    <strong>Never miss a release</strong>
+                                    <p>Add an Update Watcher per installed binary. OpsDeck checks GitHub, verifies
+                                        checksums, backs up, replaces and runs your restart command — rolling back
+                                        automatically if something smells like a downgrade.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="guide-num">06</span>
+                                <div>
+                                    <strong>Tune and audit</strong>
+                                    <p>Set custom docker / git / screen binary paths, default log tail and a GitHub
+                                        token in Settings. Every action you take shows up under Activity.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="info-privacy">
+                        <div class="info-privacy-icon"><i data-lucide="lock-keyhole"></i></div>
+                        <p><strong>Nothing leaves this server.</strong> Commands execute locally through the installed
+                            CLIs, no credentials are stored, and destructive operations always require typed
+                            confirmation phrases.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add repo modal -->
+
+    <div class="modal-backdrop" id="repoModal">
+        <div class="modal" style="width:min(560px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2>Track a git repository</h2>
+                    <p>Point OpsDeck at an existing checkout on this server.</p>
+                </div>
+                <button class="icon-btn" id="closeRepoModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="field full">
+                    <label>ABSOLUTE REPOSITORY PATH</label>
+                    <input class="input mono" id="repoPath" placeholder="/var/www/example.com">
+                    <p class="hint-text">The directory must contain a .git folder. Files are never modified by tracking.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelRepoModal">Cancel</button>
+                <button class="primary-btn" id="createRepoButton">
+                    <i data-lucide="git-branch"></i>
+                    Track repository
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container console modal -->
+
+    <div class="modal-backdrop" id="logModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <div>
+                    <h2 id="logTitle">Container</h2>
+                    <p id="logSubtitle">Logs</p>
+                </div>
+                <button class="icon-btn" id="closeLogModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-ctab="logs"><i data-lucide="scroll"></i>Logs</button>
+                    <button class="tab-btn" data-ctab="inside"><i data-lucide="terminal"></i>Inside container</button>
+                </div>
+
+                <div id="ctab-logs">
+                    <div class="stats-grid-mini" id="logStats" style="display:none"></div>
+                    <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+                        <select class="filter-select" id="tailSelect">
+                            <option value="100">Last 100 lines</option>
+                            <option value="300" selected>Last 300 lines</option>
+                            <option value="1000">Last 1000 lines</option>
+                            <option value="5000">Last 5000 lines</option>
+                        </select>
+                        <a class="run-btn" id="downloadLogs" href="#" style="text-decoration:none">Download .txt</a>
+                    </div>
+                    <div class="log-viewer" id="logContent">Loading…</div>
+                </div>
+
+                <div id="ctab-inside" style="display:none">
+                    <div style="border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 12px;margin-bottom:14px;background:rgba(255,255,255,.015)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                            <div class="mono" id="browseCrumbs" style="font-size:10.5px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
+                            <button class="run-btn" id="browseUp"><i data-lucide="corner-right-up"></i>Up</button>
+                        </div>
+                        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+                            <span class="hint-text" style="margin:0">Quick:</span>
+                            <button class="run-btn browse-shortcut" data-shortcut="/">/</button>
+                            <button class="run-btn browse-shortcut" data-shortcut="/root">/root</button>
+                            <button class="run-btn browse-shortcut" data-shortcut="/app">/app</button>
+                            <button class="run-btn browse-shortcut" data-shortcut="/home">/home</button>
+                            <button class="run-btn browse-shortcut" data-shortcut="/opt">/opt</button>
+                            <button class="run-btn browse-shortcut" data-shortcut="/var/log">/var/log</button>
+                            <button class="run-btn browse-shortcut" data-shortcut="/usr/src/app">/usr/src/app</button>
+                        </div>
+                        <div class="branch-list mono" id="containerFiles" style="max-height:230px;overflow-y:auto">
+                            <div class="empty-state compact is-loading">
+                                <div class="empty-icon"><i data-lucide="loader-circle"></i></div>
+                                <h3>Loading files</h3>
+                            </div>
+                        </div>
+                        <p class="hint-text" style="margin:8px 2px 0">Click a folder to open it, click a file to tail it below — typing a path still works.</p>
+                    </div>
+
+                    <div class="console-row">
+                        <input class="input mono" id="innerPath" placeholder="/root/tool/logs/tool.err" style="flex:1;min-width:200px">
+                        <select class="filter-select" id="innerLines" style="min-width:120px">
+                            <option value="50">50 lines</option>
+                            <option value="200" selected>200 lines</option>
+                            <option value="500">500 lines</option>
+                            <option value="2000">2000 lines</option>
+                        </select>
+                        <button class="run-btn" data-inner-action="read"><i data-lucide="scroll"></i>Tail file</button>
+                        <button class="run-btn" data-inner-action="head">Head</button>
+                        <button class="run-btn" data-inner-action="list">List dir</button>
+                    </div>
+                    <p class="hint-text" style="margin:6px 2px 14px">Absolute path inside the container. Tail/Head show the last/first lines of a file; List shows an ls -la of a directory.</p>
+
+                    <div class="console-row">
+                        <input class="input mono" id="execCommand" placeholder='sh command, e.g. tail -n 40 /root/app/logs/callback.err' style="flex:1;min-width:220px">
+                        <button class="run-btn green-action" id="execRun"><i data-lucide="terminal"></i>Run in sh -c</button>
+                    </div>
+                    <p class="hint-text" style="margin:6px 2px 12px">Runs through docker exec &lt;container&gt; sh -c "…" — full shell syntax, 180s max.</p>
+
+                    <div class="log-viewer" id="consoleOutput" style="min-height:180px">Output appears here.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen session modal -->
+
+    <div class="modal-backdrop" id="screenModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <div>
+                    <h2 id="screenModalTitle">Screen session</h2>
+                    <p id="screenModalSubtitle">Live buffer</p>
+                </div>
+                <button class="icon-btn" id="closeScreenModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                    <span class="status success" id="screenStateChip">detached</span>
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                        <label style="color:#7d8598;font-size:10px;font-weight:700;letter-spacing:.06em">WINDOW</label>
+                        <input class="input mono" id="screenWindow" type="number" min="0" max="99" value="0" style="width:70px;padding:6px 8px">
+                        <label style="display:flex;align-items:center;gap:5px;color:#7d8598;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer">
+                            <input type="checkbox" id="screenHistory" checked> SCROLLBACK
+                        </label>
+                        <button class="run-btn" id="refreshScreenContent"><i data-lucide="refresh-cw"></i>Refresh view</button>
+                    </div>
+                </div>
+
+                <div class="log-viewer mono" id="screenOutput" style="min-height:260px;max-height:46vh;white-space:pre-wrap">Loading…</div>
+
+                <div class="console-row" style="margin-top:12px">
+                    <input class="input mono" id="screenInput" placeholder='Type a command for this session, e.g. tail -f /var/log/app.log' style="flex:1;min-width:220px" autocomplete="off">
+                    <label style="display:flex;align-items:center;gap:5px;color:#7d8598;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer">
+                        <input type="checkbox" id="screenEnter" checked> ENTER
+                    </label>
+                    <button class="run-btn green-action" id="sendScreenInput"><i data-lucide="terminal"></i>Send</button>
+                </div>
+                <p class="hint-text" style="margin:6px 2px 14px">
+                    Text is injected with <code>screen -X stuff</code>. With ENTER enabled it behaves like pressing Return in the terminal.
+                </p>
+
+                <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+                    <button class="run-btn danger-action" id="killScreenButton"><i data-lucide="x"></i>Kill session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New screen modal -->
+
+    <div class="modal-backdrop" id="newScreenModal">
+        <div class="modal" style="width:min(560px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2>New screen session</h2>
+                    <p>Starts a detached GNU screen session on this server.</p>
+                </div>
+                <button class="icon-btn" id="closeNewScreenModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="form-grid">
+                    <div class="field full">
+                        <label>SESSION NAME</label>
+                        <input class="input mono" id="newScreenName" placeholder="deploy-worker" maxlength="64">
+                    </div>
+                    <div class="field full">
+                        <label>FIRST COMMAND (OPTIONAL)</label>
+                        <input class="input mono" id="newScreenCommand" placeholder="bash" maxlength="500">
+                        <p class="hint-text">Run through sh -c inside the new session. Leave empty to open a default shell.</p>
+                    </div>
+                    <div class="field full">
+                        <label>WORKING DIRECTORY (OPTIONAL)</label>
+                        <input class="input mono" id="newScreenCwd" placeholder="/var/www/example.com">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="secondary-btn" id="cancelNewScreenModal">Cancel</button>
+                    <button class="primary-btn" id="createScreenButton">
+                        <i data-lucide="terminal"></i>
+                        Start session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branches modal -->
+
+    <div class="modal-backdrop" id="branchModal">
+        <div class="modal" style="width:min(520px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2 id="branchTitle">Branches</h2>
+                    <p>Click a branch to switch to it.</p>
+                </div>
+                <button class="icon-btn" id="closeBranchModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="branch-list" id="branchList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commits modal -->
+
+    <div class="modal-backdrop" id="commitModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <div>
+                    <h2 id="commitTitle">Commits</h2>
+                    <p>Most recent history of this checkout.</p>
+                </div>
+                <button class="icon-btn" id="closeCommitModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="commit-list" id="commitList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cron task modal -->
+
+    <div class="modal-backdrop" id="cronModal">
+        <div class="modal" style="width:min(640px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2 id="cronModalTitle">New scheduled task</h2>
+                    <p id="cronModalSubtitle">Write a cron expression and the command to run.</p>
+                </div>
+                <button class="icon-btn" id="closeCronModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="field" style="margin-bottom:10px">
+                    <label>RUN THIS TASK…</label>
+                    <div class="preset-row" id="cronModes"></div>
+                </div>
+
+                <div id="cronBuilderFields" class="form-grid" style="margin-bottom:6px"></div>
+
+                <p class="hint-text" style="margin:2px 2px 16px;display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+                    <span style="color:#7d8598">Cron line:</span>
+                    <code id="cronExprEcho"
+                        style="font-family:ui-monospace,Consolas,monospace;color:#8fdcef;background:rgba(35,170,205,.09);border:1px solid rgba(90,190,220,.18);padding:3px 9px;border-radius:6px;font-size:10px">—</code>
+                </p>
+
+                <div class="field" id="customWrap" style="display:none;margin-bottom:14px">
+                    <label>CRON EXPRESSION</label>
+                    <input class="input mono" id="cronSchedule" placeholder="*/5 * * * *">
+                    <p class="hint-text">Five fields: minute · hour · day-of-month · month · day-of-week</p>
+                </div>
+
+                <div class="field" style="margin-bottom:14px">
+                    <label>COMMAND</label>
+                    <input class="input mono" id="cronCommand" placeholder="/usr/local/bin/backup.sh >> /var/log/backup.log 2>&1">
+                </div>
+                <div class="field">
+                    <label>COMMENT (OPTIONAL)</label>
+                    <input class="input" id="cronComment" placeholder="Nightly database backup">
+                </div>
+                <div class="preview-box" id="cronPreview" style="display:none">
+                    <strong id="cronPreviewHuman"></strong>
+                    <span id="cronPreviewNext"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelCronModal">Cancel</button>
+                <button class="primary-btn" id="saveCronButton">
+                    <i data-lucide="save"></i>
+                    Save task
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Run result modal -->
+
+    <div class="modal-backdrop" id="runModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <div>
+                    <h2>Task output</h2>
+                    <p id="runMeta">Executed on demand</p>
+                </div>
+                <button class="icon-btn" id="closeRunModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="stats-grid-mini" id="runStats"></div>
+                <div class="log-viewer" id="runOutput">Running…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diff modal -->
+
+    <div class="modal-backdrop" id="diffModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <div>
+                    <h2 id="diffTitle">Working tree changes</h2>
+                    <p id="diffSubtitle">git diff HEAD</p>
+                </div>
+                <button class="icon-btn" id="closeDiffModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="log-viewer" id="diffContent">Loading…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Watcher modal -->
+
+    <div class="modal-backdrop" id="watcherModal">
+        <div class="modal" style="width:min(680px,100%)">
+            <div class="modal-header">
+                <div>
+                    <h2 id="watcherModalTitle">Track a tool release</h2>
+                    <p id="watcherModalSubtitle">Point OpsDeck at a GitHub repository and the installed binary.</p>
+                </div>
+                <button class="icon-btn" id="closeWatcherModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>DISPLAY NAME</label>
+                        <input class="input" id="wName" placeholder="caddy web server">
+                    </div>
+                    <div class="field">
+                        <label>GITHUB REPOSITORY</label>
+                        <input class="input mono" id="wRepo" placeholder="owner/repo">
+                    </div>
+                    <div class="field full">
+                        <label>INSTALL PATH (BINARY ON THIS SERVER)</label>
+                        <input class="input mono" id="wPath" placeholder="/usr/local/bin/caddy">
+                        <p class="hint-text">May point at a not-yet-existing file; its parent directory must exist. First apply performs a fresh install.</p>
+                    </div>
+                    <div class="field full">
+                        <label>ASSET NAME PATTERN</label>
+                        <input class="input mono" id="wPattern" placeholder="*linux-amd64*">
+                        <p class="hint-text">fnmatch pattern against release assets, e.g. *linux-amd64*, *.tar.gz, mytool_*_linux_64-bit. Leave empty to require an exact single asset.</p>
+                    </div>
+                    <div class="field">
+                        <label>VERSION COMMAND ARGS</label>
+                        <input class="input mono" id="wArgs" value="--version">
+                    </div>
+                    <div class="field">
+                        <label>VERSION REGEX</label>
+                        <input class="input mono" id="wRegex" value="(\d+(?:\.\d+)+)">
+                    </div>
+                    <div class="field full">
+                        <label>RESTART COMMAND AFTER UPDATE (OPTIONAL)</label>
+                        <input class="input mono" id="wRestart" placeholder="systemctl restart caddy">
+                    </div>
+                    <div class="field full">
+                        <label class="check-row" for="wPrerelease" style="cursor:pointer">
+                            <input type="checkbox" id="wPrerelease" style="width:16px;height:16px;accent-color:#46c8de">
+                            <span>Include pre-releases when checking for updates</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelWatcherModal">Cancel</button>
+                <button class="primary-btn" id="saveWatcherButton">
+                    <i data-lucide="save"></i>
+                    Save watcher
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="ui.js?v=1.1.9"></script>
+</body>
+
+</html>

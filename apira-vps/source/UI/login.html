@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta name="color-scheme" content="dark">
+
+    <title>Sign in · Apira VPS</title>
+
+    <style>
+        :root {
+            --background: #080a12;
+            --background-secondary: #0d101b;
+            --card: rgba(18, 21, 35, 0.82);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --input: rgba(255, 255, 255, 0.055);
+            --input-hover: rgba(255, 255, 255, 0.075);
+            --text: #f8fafc;
+            --muted: #8c94a8;
+            --primary: #8b5cf6;
+            --primary-light: #a78bfa;
+            --cyan: #22d3ee;
+            --danger: #fb7185;
+            --danger-bg: rgba(251, 113, 133, 0.09);
+            --shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+            color: var(--text);
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            background:
+                radial-gradient(
+                    circle at 15% 20%,
+                    rgba(139, 92, 246, 0.18),
+                    transparent 35%
+                ),
+                radial-gradient(
+                    circle at 85% 80%,
+                    rgba(34, 211, 238, 0.1),
+                    transparent 34%
+                ),
+                var(--background);
+        }
+
+        body::before {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            content: "";
+            opacity: 0.25;
+            pointer-events: none;
+            background-image:
+                linear-gradient(
+                    rgba(255, 255, 255, 0.025) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255, 255, 255, 0.025) 1px,
+                    transparent 1px
+                );
+            background-size: 42px 42px;
+            mask-image:
+                linear-gradient(
+                    to bottom,
+                    black,
+                    transparent 90%
+                );
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        .login-wrapper {
+            width: min(100%, 430px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .brand-icon {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(167, 139, 250, 0.28);
+            border-radius: 15px;
+            color: white;
+            font-size: 19px;
+            font-weight: 800;
+            box-shadow:
+                0 15px 35px rgba(139, 92, 246, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--primary),
+                    #6d5dfc 50%,
+                    var(--cyan)
+                );
+        }
+
+        .brand-name {
+            font-size: 21px;
+            font-weight: 750;
+            letter-spacing: -0.04em;
+        }
+
+        .brand-name span {
+            color: var(--primary-light);
+        }
+
+        .login-card {
+            position: relative;
+            padding: 32px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(22px);
+        }
+
+        .login-card::before {
+            position: absolute;
+            top: 0;
+            left: 10%;
+            width: 80%;
+            height: 1px;
+            content: "";
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(167, 139, 250, 0.75),
+                    rgba(34, 211, 238, 0.6),
+                    transparent
+                );
+        }
+
+        .heading {
+            margin-bottom: 27px;
+            text-align: center;
+        }
+
+        .heading h1 {
+            margin: 0 0 9px;
+            font-size: 27px;
+            letter-spacing: -0.045em;
+        }
+
+        .heading p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(251, 113, 133, 0.22);
+            border-radius: 12px;
+            color: #fecdd3;
+            font-size: 13px;
+            line-height: 1.55;
+            background: var(--danger-bg);
+        }
+
+        .alert-icon {
+            flex: 0 0 auto;
+            margin-top: 1px;
+            color: var(--danger);
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d9dce7;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 19px;
+            height: 19px;
+            display: grid;
+            place-items: center;
+            color: #737b91;
+            pointer-events: none;
+            transform: translateY(-50%);
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            height: 50px;
+            padding: 0 46px 0 44px;
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            border-radius: 13px;
+            outline: none;
+            color: var(--text);
+            background: var(--input);
+            transition:
+                border-color 160ms ease,
+                background-color 160ms ease,
+                box-shadow 160ms ease;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #666e83;
+        }
+
+        .input-wrapper input:hover {
+            background: var(--input-hover);
+        }
+
+        .input-wrapper input:focus {
+            border-color: rgba(139, 92, 246, 0.7);
+            background: rgba(139, 92, 246, 0.055);
+            box-shadow:
+                0 0 0 4px rgba(139, 92, 246, 0.11);
+        }
+
+        .password-button {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            width: 35px;
+            height: 35px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border: 0;
+            border-radius: 9px;
+            cursor: pointer;
+            color: #8991a5;
+            background: transparent;
+            transform: translateY(-50%);
+        }
+
+        .password-button:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .submit-button {
+            width: 100%;
+            height: 51px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            margin-top: 6px;
+            border: 0;
+            border-radius: 13px;
+            cursor: pointer;
+            color: white;
+            font-weight: 750;
+            box-shadow:
+                0 14px 32px rgba(139, 92, 246, 0.24);
+            background:
+                linear-gradient(
+                    135deg,
+                    #7c3aed,
+                    #8b5cf6 55%,
+                    #6d5dfc
+                );
+            transition:
+                transform 160ms ease,
+                filter 160ms ease,
+                box-shadow 160ms ease;
+        }
+
+        .submit-button:hover {
+            filter: brightness(1.08);
+            box-shadow:
+                0 17px 40px rgba(139, 92, 246, 0.32);
+            transform: translateY(-1px);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .submit-button:disabled {
+            cursor: wait;
+            filter: saturate(0.7);
+            opacity: 0.75;
+        }
+
+        .security-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            margin-top: 20px;
+            color: #686f82;
+            font-size: 12px;
+        }
+
+        .security-note svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .footer {
+            margin-top: 19px;
+            color: #596073;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 17px;
+            height: 17px;
+            display: none;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 650ms linear infinite;
+        }
+
+        .submit-button.loading .spinner {
+            display: block;
+        }
+
+        .submit-button.loading .button-icon {
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 16px;
+            }
+
+            .login-card {
+                padding: 27px 21px;
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-wrapper">
+        <div class="brand">
+            <div class="brand-icon">W</div>
+
+            <div class="brand-name">
+                We<span>VPS</span>
+            </div>
+        </div>
+
+        <section class="login-card">
+            <header class="heading">
+                <h1>Welcome back</h1>
+
+                <p>
+                    Sign in to securely access your server control panel.
+                </p>
+            </header>
+
+            {% if error %}
+                <div class="alert" role="alert">
+                    <span class="alert-icon">●</span>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form
+                id="loginForm"
+                method="post"
+                autocomplete="on"
+            >
+                <div class="field">
+                    <label
+                        class="field-label"
+                        for="username"
+                    >
+                        Username
+                    </label>
+
+                    <div class="input-wrapper">
+                        <span class="input-icon">◇</span>
+
+                        <input
+                            id="username"
+                            name="username"
+                            type="text"
+                            placeholder="Enter your username"
+                            autocomplete="username"
+                            maxlength="128"
+                            autofocus
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label
+                        class="field-label"
+                        for="password"
+                    >
+                        Password
+                    </label>
+
+                    <div class="input-wrapper">
+                        <span class="input-icon">◆</span>
+
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            maxlength="256"
+                            required
+                        >
+
+                        <button
+                            id="togglePassword"
+                            class="password-button"
+                            type="button"
+                            aria-label="Show password"
+                        >
+                            ◉
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    id="submitButton"
+                    class="submit-button"
+                    type="submit"
+                >
+                    <span class="button-icon">→</span>
+                    <span class="button-text">Sign in</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+
+            <div class="security-note">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <rect
+                        width="16"
+                        height="11"
+                        x="4"
+                        y="11"
+                        rx="2"
+                    ></rect>
+
+                    <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+                </svg>
+
+                Protected server access
+            </div>
+        </section>
+
+        <footer class="footer">
+            Apira VPS Control Panel
+        </footer>
+    </main>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const form = document.getElementById("loginForm");
+            const passwordInput = document.getElementById("password");
+            const togglePassword =
+                document.getElementById("togglePassword");
+            const submitButton =
+                document.getElementById("submitButton");
+
+            togglePassword.addEventListener("click", () => {
+                const passwordIsVisible =
+                    passwordInput.type === "text";
+
+                passwordInput.type =
+                    passwordIsVisible ? "password" : "text";
+
+                togglePassword.setAttribute(
+                    "aria-label",
+                    passwordIsVisible
+                        ? "Show password"
+                        : "Hide password"
+                );
+
+                togglePassword.textContent =
+                    passwordIsVisible ? "◉" : "⊘";
+            });
+
+            form.addEventListener("submit", () => {
+                submitButton.disabled = true;
+                submitButton.classList.add("loading");
+
+                const text =
+                    submitButton.querySelector(".button-text");
+
+                if (text) {
+                    text.textContent = "Signing in...";
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

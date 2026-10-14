@@ -1,0 +1,3962 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080b14">
+    <title>Apira VPS Control Center</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg: #080b14;
+            --sidebar: rgba(11, 14, 25, 0.94);
+            --surface: rgba(18, 23, 38, 0.78);
+            --surface-solid: #121726;
+            --surface-hover: rgba(36, 43, 66, 0.86);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.14);
+            --text: #f3f6ff;
+            --muted: #8e98af;
+            --purple: #8b5cf6;
+            --purple-light: #b29aff;
+            --blue: #3b82f6;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --radius: 18px;
+            --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 90% 0%, rgba(139, 92, 246, 0.15), transparent 30%),
+                radial-gradient(circle at 35% 110%, rgba(34, 211, 238, 0.08), transparent 35%),
+                var(--bg);
+            font-family: "Inter", sans-serif;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            color: inherit;
+        }
+
+        ::selection {
+            color: white;
+            background: var(--purple);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            border-radius: 20px;
+            background: #293149;
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 270px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+
+        .sidebar {
+            position: fixed;
+            z-index: 60;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 270px;
+            display: flex;
+            flex-direction: column;
+            padding: 22px 17px;
+            border-right: 1px solid var(--border);
+            background: var(--sidebar);
+            backdrop-filter: blur(22px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 2px 10px 26px;
+        }
+
+        .brand-mark {
+            position: relative;
+            width: 43px;
+            height: 43px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 14px;
+            background: linear-gradient(145deg, #8b5cf6, #2563eb);
+            box-shadow: 0 10px 30px rgba(91, 33, 182, 0.35);
+        }
+
+        .brand-mark::after {
+            position: absolute;
+            inset: -30%;
+            content: "";
+            background: linear-gradient(120deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 0.4),
+                    transparent 70%);
+            transform: translateX(-120%) rotate(15deg);
+            animation: shine 5s infinite;
+        }
+
+        @keyframes shine {
+
+            0%,
+            70% {
+                transform: translateX(-120%) rotate(15deg);
+            }
+
+            100% {
+                transform: translateX(120%) rotate(15deg);
+            }
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-title span {
+            color: var(--purple-light);
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .nav-label {
+            margin: 12px 12px 8px;
+            color: #59627a;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.3px;
+            text-transform: uppercase;
+        }
+
+        .nav {
+            display: grid;
+            gap: 4px;
+        }
+
+        .nav-item {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 13px;
+            border: 0;
+            border-radius: 12px;
+            color: var(--muted);
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .nav-item:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-item.active {
+            color: white;
+            background: linear-gradient(90deg,
+                    rgba(139, 92, 246, 0.22),
+                    rgba(59, 130, 246, 0.06));
+        }
+
+        .nav-item.active::before {
+            position: absolute;
+            left: -17px;
+            width: 3px;
+            height: 24px;
+            content: "";
+            border-radius: 0 5px 5px 0;
+            background: var(--purple-light);
+            box-shadow: 0 0 15px var(--purple);
+        }
+
+        .nav-item i {
+            width: 17px;
+            height: 17px;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            padding: 3px 7px;
+            border-radius: 20px;
+            color: #cabdff;
+            background: rgba(139, 92, 246, 0.15);
+            font-size: 9px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .server-mini {
+            margin-bottom: 12px;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .server-mini-top {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 10px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.7);
+        }
+
+        .server-mini strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .server-mini span {
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .mini-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 13px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: linear-gradient(145deg, #29324d, #171b2b);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .user-name {
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .user-role {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        /* Main */
+
+        .main {
+            grid-column: 2;
+            min-width: 0;
+            padding: 22px 30px 50px;
+        }
+
+        .topbar {
+            position: sticky;
+            z-index: 40;
+            top: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 64px;
+            margin: -22px -30px 22px;
+            padding: 12px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            background: rgba(8, 11, 20, 0.76);
+            backdrop-filter: blur(20px);
+        }
+
+        .menu-btn {
+            display: none !important;
+        }
+
+        .search {
+            position: relative;
+            width: min(430px, 45vw);
+        }
+
+        .search i {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 16px;
+            color: var(--muted);
+            transform: translateY(-50%);
+        }
+
+        .search input {
+            width: 100%;
+            height: 40px;
+            padding: 0 15px 0 41px;
+            border: 1px solid var(--border);
+            outline: none;
+            border-radius: 12px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.035);
+            font-size: 11px;
+            transition: 0.2s ease;
+        }
+
+        .search input:focus {
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.08);
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .icon-btn,
+        .primary-btn,
+        .secondary-btn,
+        .danger-btn,
+        .small-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            border-radius: 11px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .icon-btn {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .icon-btn:hover {
+            border-color: var(--border-strong);
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+        }
+
+        .icon-btn i {
+            width: 17px;
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            border: 1px solid var(--bg);
+            border-radius: 50%;
+            background: var(--red);
+        }
+
+        .primary-btn,
+        .secondary-btn,
+        .danger-btn {
+            min-height: 40px;
+            padding: 0 15px;
+        }
+
+        .primary-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            box-shadow: 0 10px 25px rgba(109, 40, 217, 0.22);
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(109, 40, 217, 0.35);
+        }
+
+        .secondary-btn {
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .danger-btn {
+            border: 1px solid rgba(239, 68, 68, 0.22);
+            color: #ff9797;
+            background: rgba(239, 68, 68, 0.09);
+        }
+
+        .small-btn {
+            min-height: 31px;
+            padding: 0 10px;
+            border: 1px solid var(--border);
+            color: #c9d0e5;
+            background: rgba(255, 255, 255, 0.035);
+            font-size: 9px;
+        }
+
+        .small-btn:hover {
+            border-color: rgba(139, 92, 246, 0.35);
+            color: white;
+            background: rgba(139, 92, 246, 0.11);
+        }
+
+        .small-btn i {
+            width: 12px;
+        }
+
+        .page {
+            display: none;
+            animation: pageIn 0.3s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes pageIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 23px;
+        }
+
+        .eyebrow {
+            margin-bottom: 7px;
+            color: var(--purple-light);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: clamp(25px, 3vw, 34px);
+            line-height: 1.15;
+            letter-spacing: -1.2px;
+        }
+
+        .page-description {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 11px;
+            border: 1px solid rgba(34, 197, 94, 0.16);
+            border-radius: 10px;
+            color: #71e597;
+            background: rgba(34, 197, 94, 0.07);
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .live-badge::before {
+            width: 6px;
+            height: 6px;
+            content: "";
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* Cards */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card,
+        .panel {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+            backdrop-filter: blur(18px);
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            padding: 17px;
+            border-radius: 17px;
+            transition: 0.24s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-3px);
+        }
+
+        .stat-card::after {
+            position: absolute;
+            right: -35px;
+            bottom: -55px;
+            width: 110px;
+            height: 110px;
+            content: "";
+            border-radius: 50%;
+            background: var(--glow);
+            filter: blur(5px);
+            opacity: 0.13;
+        }
+
+        .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-icon {
+            width: 37px;
+            height: 37px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            color: var(--color);
+            background: color-mix(in srgb, var(--color) 13%, transparent);
+        }
+
+        .stat-icon i {
+            width: 18px;
+        }
+
+        .stat-value {
+            margin-top: 16px;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .stat-label {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .trend {
+            color: #67df8d;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(310px, 0.8fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .panel {
+            overflow: hidden;
+            border-radius: var(--radius);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 17px 19px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .panel-subtitle {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .panel-body {
+            padding: 19px;
+        }
+
+        /* Live chart */
+
+        .chart-wrap {
+            position: relative;
+            height: 245px;
+            padding: 10px 0;
+        }
+
+        #resourceChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 13px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        /* Traffic since boot */
+
+        .traffic-panel-body { padding-top: 16px; }
+
+        .traffic-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 9px;
+            border: 1px solid rgba(34, 211, 238, 0.15);
+            border-radius: 9px;
+            color: #67d9ff;
+            background: rgba(34, 211, 238, 0.07);
+            font-size: 8px;
+            font-weight: 700;
+        }
+
+        .traffic-live > i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 9px currentColor;
+            animation: pulseTraffic 1.8s ease-in-out infinite;
+        }
+
+        @keyframes pulseTraffic {
+            50% { opacity: 0.4; transform: scale(0.75); }
+        }
+
+        .traffic-totals {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .traffic-total {
+            --traffic-color: #22d3ee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.022);
+        }
+
+        .traffic-total.upload { --traffic-color: #a78bfa; }
+        .traffic-total.combined { --traffic-color: #4ade80; }
+
+        .traffic-total-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border-radius: 10px;
+            color: var(--traffic-color);
+            background: color-mix(in srgb, var(--traffic-color) 11%, transparent);
+        }
+
+        .traffic-total-icon i { width: 15px; }
+        .traffic-total span { display: block; color: var(--muted); font-size: 7px; }
+        .traffic-total strong { display: block; margin-top: 5px; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+
+        .traffic-chart-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 7px;
+            color: #aeb7ca;
+            font-size: 8px;
+            font-weight: 700;
+        }
+
+        .traffic-chart-wrap {
+            position: relative;
+            height: 145px;
+        }
+
+        #trafficChart { width: 100%; height: 100%; }
+
+        /* Health */
+
+        .health-content {
+            display: grid;
+            place-items: center;
+            padding: 8px 0 15px;
+        }
+
+        .health-ring {
+            --health: 96;
+            position: relative;
+            width: 150px;
+            height: 150px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at center, #151a2a 61%, transparent 62%),
+                conic-gradient(var(--green) calc(var(--health) * 1%),
+                    rgba(255, 255, 255, 0.07) 0);
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.1);
+        }
+
+        .health-value {
+            text-align: center;
+        }
+
+        .health-value strong {
+            display: block;
+            font-size: 32px;
+            letter-spacing: -1.5px;
+        }
+
+        .health-value span {
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .health-list {
+            width: 100%;
+            display: grid;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .health-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 9px;
+        }
+
+        .health-row strong {
+            color: var(--text);
+            font-size: 10px;
+        }
+
+        /* Activity */
+
+        .activity-list {
+            display: grid;
+        }
+
+        .activity {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) auto;
+            gap: 11px;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .activity:last-child {
+            border-bottom: 0;
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .activity-icon i {
+            width: 16px;
+        }
+
+        .activity-title {
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .activity-detail {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            border-radius: 8px;
+            font-size: 8px;
+            font-weight: 800;
+        }
+
+        .status::before {
+            width: 5px;
+            height: 5px;
+            content: "";
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status.success {
+            color: #67df8d;
+            background: rgba(34, 197, 94, 0.09);
+        }
+
+        .status.warning {
+            color: #fbbf58;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .status.failed,
+        .status.stopped {
+            color: #ff7b7b;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .status.running {
+            color: #62caff;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Resource monitor */
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .resource-card {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: var(--surface);
+        }
+
+        .resource-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .resource-name {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .resource-name i {
+            width: 17px;
+            color: var(--purple-light);
+        }
+
+        .resource-number {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .progress {
+            height: 7px;
+            overflow: hidden;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--purple), var(--cyan));
+            transition: width 0.6s ease, background 0.3s ease;
+        }
+
+        .resource-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        /* Tools */
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .tool-card {
+            padding: 19px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--surface);
+            transition: 0.24s ease;
+        }
+
+        .tool-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .tool-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .tool-icon {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            flex: 0 0 auto;
+            place-items: center;
+            border-radius: 13px;
+            color: #c7b7ff;
+            background: linear-gradient(145deg,
+                    rgba(139, 92, 246, 0.19),
+                    rgba(59, 130, 246, 0.08));
+        }
+
+        .tool-icon i {
+            width: 20px;
+        }
+
+        .tool-card h3 {
+            margin-top: 2px;
+            font-size: 13px;
+        }
+
+        .tool-description {
+            min-height: 48px;
+            margin: 13px 0;
+            color: var(--muted);
+            font-size: 9px;
+            line-height: 1.7;
+        }
+
+        .tool-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .tool-info-item {
+            padding: 9px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tool-info-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 8px;
+        }
+
+        .tool-info-item strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 9px;
+        }
+
+        .tool-progress {
+            display: none;
+            margin-bottom: 14px;
+        }
+
+        .tool-progress.show {
+            display: block;
+        }
+
+        .tool-progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 7px;
+            color: var(--muted);
+            font-size: 8px;
+        }
+
+        .tool-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            padding-top: 13px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Tables */
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        th {
+            padding: 12px 14px;
+            color: #69738a;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.7px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 14px;
+            border-top: 1px solid var(--border);
+            color: #dbe1ef;
+            font-size: 9px;
+        }
+
+        .service-name {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-weight: 700;
+        }
+
+        .service-name i {
+            width: 15px;
+            color: var(--purple-light);
+        }
+
+        /* Info */
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .info-item {
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .info-item span {
+            color: var(--muted);
+            font-size: 8px;
+            text-transform: uppercase;
+        }
+
+        .info-item strong {
+            display: block;
+            margin-top: 7px;
+            font-size: 10px;
+        }
+
+        /* Modal */
+
+        .modal-backdrop {
+            position: fixed;
+            z-index: 100;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(2, 4, 10, 0.76);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+            animation: fade 0.2s ease;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal {
+            width: min(500px, 100%);
+            overflow: hidden;
+            border: 1px solid var(--border-strong);
+            border-radius: 22px;
+            background: #111624;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 19px 21px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-size: 15px;
+        }
+
+        .modal-header p {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .modal-body {
+            padding: 21px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.7;
+        }
+
+        .modal-warning {
+            display: flex;
+            gap: 11px;
+            padding: 13px;
+            border: 1px solid rgba(245, 158, 11, 0.18);
+            border-radius: 12px;
+            color: #f4c66e;
+            background: rgba(245, 158, 11, 0.07);
+        }
+
+        .modal-warning i {
+            width: 18px;
+            flex: 0 0 auto;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 15px 21px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Toast */
+
+        .toast-container {
+            position: fixed;
+            z-index: 200;
+            right: 20px;
+            bottom: 20px;
+            display: grid;
+            gap: 9px;
+        }
+
+        .toast {
+            width: min(340px, calc(100vw - 40px));
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 13px;
+            border: 1px solid var(--border-strong);
+            border-radius: 14px;
+            background: rgba(18, 23, 38, 0.96);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(15px);
+            animation: toastIn 0.28s ease;
+            transition: 0.2s ease;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(25px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            color: #67df8d;
+            background: rgba(34, 197, 94, 0.11);
+        }
+
+        .toast-icon i {
+            width: 16px;
+        }
+
+        .toast-title {
+            font-size: 10px;
+            font-weight: 750;
+        }
+
+        .toast-message {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 8px;
+        }
+
+        .toast-close {
+            border: 0;
+            color: var(--muted);
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .toast-close i {
+            width: 13px;
+        }
+
+        .mobile-overlay {
+            position: fixed;
+            z-index: 55;
+            inset: 0;
+            display: none;
+            background: rgba(0, 0, 0, 0.58);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Security center */
+
+        .security-hero {
+            --security-color: var(--purple);
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 24px;
+            min-height: 210px;
+            margin-bottom: 16px;
+            padding: 25px 28px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 90% 50%, color-mix(in srgb, var(--security-color) 17%, transparent), transparent 28%),
+                var(--surface);
+        }
+
+        .security-score-ring {
+            --score: 0;
+            width: 142px;
+            height: 142px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle, #131827 61%, transparent 62%),
+                conic-gradient(var(--security-color) calc(var(--score) * 1%), rgba(255, 255, 255, 0.07) 0);
+            box-shadow: 0 0 45px color-mix(in srgb, var(--security-color) 14%, transparent);
+        }
+
+        .security-score-ring div { text-align: center; }
+        .security-score-ring strong { display: block; font-size: 35px; letter-spacing: -2px; }
+        .security-score-ring span { color: var(--muted); font-size: 8px; }
+
+        .security-kicker {
+            color: var(--security-color);
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .security-hero-copy h2 { margin-top: 7px; font-size: 23px; letter-spacing: -0.7px; }
+        .security-hero-copy p { max-width: 620px; margin-top: 8px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+
+        .security-checked {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 15px;
+            color: #78839b;
+            font-size: 8px;
+        }
+
+        .security-checked::before { width: 5px; height: 5px; content: ""; border-radius: 50%; background: var(--security-color); }
+
+        .security-shield { color: color-mix(in srgb, var(--security-color) 27%, transparent); }
+        .security-shield i { width: 95px; height: 95px; stroke-width: 1.1; }
+
+        .security-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 13px;
+            margin-bottom: 16px;
+        }
+
+        .security-stat { padding: 17px; border-radius: 16px; }
+
+        .security-stat-icon {
+            width: 35px;
+            height: 35px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+
+        .security-stat-icon i { width: 16px; }
+        .security-stat-icon.purple { color: #b29aff; background: rgba(139, 92, 246, 0.12); }
+        .security-stat-icon.blue { color: #60a5fa; background: rgba(59, 130, 246, 0.12); }
+        .security-stat-icon.yellow { color: #fbbf24; background: rgba(245, 158, 11, 0.11); }
+        .security-stat-icon.green { color: #4ade80; background: rgba(34, 197, 94, 0.11); }
+        .security-stat > span { display: block; color: var(--muted); font-size: 8px; }
+        .security-stat > strong { display: block; margin-top: 6px; font-size: 15px; }
+        .security-stat > small { display: block; margin-top: 5px; color: #667087; font-size: 8px; line-height: 1.5; }
+
+        .security-configure-btn {
+            width: 100%;
+            margin-top: 13px;
+        }
+
+        .ssh-port-modal { width: min(560px, 100%); }
+        .ssh-port-modal form { padding: 20px; }
+
+        .ssh-port-warning {
+            display: flex;
+            gap: 11px;
+            padding: 13px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            color: #f4c66e;
+            background: rgba(245, 158, 11, 0.07);
+        }
+
+        .ssh-port-warning i { width: 18px; flex: 0 0 auto; }
+        .ssh-port-warning p { font-size: 9px; line-height: 1.65; }
+        .ssh-port-fields { display: grid; gap: 15px; margin-top: 18px; }
+        .ssh-port-fields label > span { display: block; margin-bottom: 7px; color: #d6dbea; font-size: 9px; font-weight: 700; }
+
+        .ssh-port-fields input {
+            width: 100%;
+            height: 44px;
+            padding: 0 13px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            outline: none;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.035);
+            font-size: 10px;
+        }
+
+        .ssh-port-fields input:focus {
+            border-color: rgba(139, 92, 246, 0.55);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.08);
+        }
+
+        .ssh-port-fields small { display: block; margin-top: 6px; color: #667087; font-size: 8px; line-height: 1.5; }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin: 20px -20px -20px;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .security-layout {
+            display: grid;
+            grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.22fr);
+            gap: 16px;
+        }
+
+        .security-recommendations { display: grid; gap: 0; padding: 7px 18px; }
+
+        .security-recommendation {
+            --recommendation-color: var(--purple-light);
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 11px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .security-recommendation:last-child { border-bottom: 0; }
+        .security-recommendation.critical { --recommendation-color: #fb7185; }
+        .security-recommendation.warning { --recommendation-color: #fbbf24; }
+        .security-recommendation.success { --recommendation-color: #4ade80; }
+
+        .security-recommendation-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            color: var(--recommendation-color);
+            background: color-mix(in srgb, var(--recommendation-color) 10%, transparent);
+        }
+
+        .security-recommendation-icon i { width: 15px; }
+        .security-recommendation strong { display: block; font-size: 10px; }
+        .security-recommendation p { margin-top: 5px; color: var(--muted); font-size: 8px; line-height: 1.65; }
+
+        .security-ports-wrap { overflow-x: auto; }
+        .security-ports-table { width: 100%; border-collapse: collapse; }
+        .security-ports-table th { padding: 11px 14px; color: #646e85; font-size: 7px; letter-spacing: 0.8px; text-align: left; text-transform: uppercase; }
+        .security-ports-table td { padding: 12px 14px; border-top: 1px solid var(--border); color: #b5bdd0; font-size: 9px; }
+        .security-ports-table td strong { color: var(--text); font-size: 10px; }
+
+        .exposure-badge { display: inline-flex; padding: 5px 7px; border-radius: 7px; font-size: 7px; font-weight: 800; }
+        .exposure-badge.public { color: #fb929f; background: rgba(239, 68, 68, 0.1); }
+        .exposure-badge.local { color: #67df8d; background: rgba(34, 197, 94, 0.09); }
+
+        .security-loading { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 90px; color: var(--muted); font-size: 9px; }
+        .security-loading i { width: 16px; animation: spin 0.9s linear infinite; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notifications */
+
+        .notification-summary {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 18px;
+            padding: 15px 17px;
+            border: 1px solid rgba(139, 92, 246, 0.16);
+            border-radius: 16px;
+            background: linear-gradient(100deg, rgba(139, 92, 246, 0.1), rgba(34, 211, 238, 0.035));
+        }
+
+        .notification-summary-icon {
+            width: 39px;
+            height: 39px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border-radius: 11px;
+            color: var(--purple-light);
+            background: rgba(139, 92, 246, 0.14);
+        }
+
+        .notification-summary-icon i {
+            width: 17px;
+        }
+
+        .notification-summary strong,
+        .notification-summary span {
+            display: block;
+        }
+
+        .notification-summary strong {
+            font-size: 11px;
+        }
+
+        .notification-summary span {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .notification-live {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 7px;
+            margin: 0 0 0 auto !important;
+            padding: 7px 10px;
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 9px;
+            color: #71e597 !important;
+            background: rgba(34, 197, 94, 0.07);
+            font-weight: 700;
+        }
+
+        .notification-live i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 9px currentColor;
+        }
+
+        .notifications-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .notification-card {
+            position: relative;
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) auto;
+            gap: 14px;
+            align-items: start;
+            padding: 18px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: var(--surface);
+            transition: 0.22s ease;
+        }
+
+        .notification-card::before {
+            position: absolute;
+            top: 14px;
+            bottom: 14px;
+            left: 0;
+            width: 3px;
+            content: "";
+            border-radius: 0 4px 4px 0;
+            background: var(--notice-color);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--notice-color) 65%, transparent);
+        }
+
+        .notification-card:hover {
+            border-color: var(--border-strong);
+            background: rgba(24, 30, 49, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .notification-card.info { --notice-color: #8b5cf6; }
+        .notification-card.success { --notice-color: #22c55e; }
+        .notification-card.warning { --notice-color: #f59e0b; }
+        .notification-card.critical { --notice-color: #ef4444; }
+
+        .notification-card-icon {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            color: var(--notice-color);
+            background: color-mix(in srgb, var(--notice-color) 11%, transparent);
+        }
+
+        .notification-card-icon i { width: 19px; }
+
+        .notification-card-body h2 {
+            margin: 1px 0 7px;
+            font-size: 13px;
+            letter-spacing: -0.2px;
+        }
+
+        .notification-card-body p {
+            max-width: 780px;
+            color: #a5aec2;
+            font-size: 10px;
+            line-height: 1.75;
+            white-space: pre-line;
+        }
+
+        .notification-card-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 8px;
+        }
+
+        .notification-type {
+            padding: 5px 8px;
+            border-radius: 8px;
+            color: var(--notice-color);
+            background: color-mix(in srgb, var(--notice-color) 9%, transparent);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .notification-link {
+            align-self: center;
+            color: #c9d0e5;
+            text-decoration: none;
+        }
+
+        .notification-empty {
+            min-height: 230px;
+            display: grid;
+            place-items: center;
+            align-content: center;
+            gap: 9px;
+            padding: 30px;
+            border: 1px dashed var(--border-strong);
+            border-radius: 18px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.018);
+        }
+
+        .notification-empty i {
+            width: 28px;
+            color: var(--purple-light);
+        }
+
+        .notification-empty strong {
+            color: var(--text);
+            font-size: 12px;
+        }
+
+        .notification-empty span {
+            font-size: 9px;
+            line-height: 1.6;
+        }
+
+        /* Settings */
+
+        .settings-panel {
+            max-width: 760px;
+        }
+
+        .settings-option {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 19px;
+        }
+
+        .settings-option-icon {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border: 1px solid rgba(239, 68, 68, 0.18);
+            border-radius: 13px;
+            color: #ff9797;
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .settings-option-icon i {
+            width: 19px;
+        }
+
+        .settings-option-copy {
+            min-width: 0;
+            display: grid;
+            gap: 5px;
+            margin-right: auto;
+        }
+
+        .settings-option-copy strong {
+            font-size: 12px;
+        }
+
+        .settings-option-copy span {
+            color: var(--muted);
+            font-size: 9px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1150px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tools-grid {
+                grid-template-columns: repeat(2, minmax(250px, 1fr));
+            }
+
+            .security-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                transform: translateX(-105%);
+                transition: 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .mobile-overlay.show {
+                display: block;
+            }
+
+            .main {
+                grid-column: 1;
+                padding: 18px;
+            }
+
+            .topbar {
+                margin: -18px -18px 20px;
+                padding: 11px 18px;
+            }
+
+            .menu-btn {
+                display: inline-flex !important;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .security-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .search {
+                width: auto;
+                flex: 1;
+            }
+
+            .server-action-text {
+                display: none;
+            }
+
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .stats,
+            .resource-grid,
+            .tools-grid,
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-actions {
+                gap: 6px;
+            }
+
+            .top-actions .icon-btn:nth-child(2) {
+                display: none;
+            }
+
+            .security-hero {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                padding: 24px 20px;
+                text-align: center;
+            }
+
+            .security-shield {
+                display: none;
+            }
+
+            .security-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .traffic-totals {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-option {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .settings-option-copy {
+                width: calc(100% - 58px);
+                margin-right: 0;
+            }
+
+            .settings-option form,
+            .settings-option .danger-btn {
+                width: 100%;
+            }
+
+            .notification-summary {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .notification-live {
+                width: 100%;
+                justify-content: center;
+                margin-left: 0 !important;
+            }
+
+            .notification-card {
+                grid-template-columns: 40px minmax(0, 1fr);
+                padding: 16px;
+            }
+
+            .notification-card-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .notification-link {
+                grid-column: 1 / -1;
+                width: 100%;
+            }
+        }
+
+        .service-state {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 9px;
+            border-radius: 9px;
+            font-size: 8px;
+            font-weight: 800;
+            border: 1px solid transparent;
+        }
+
+        .service-state::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .service-state.running {
+            color: #67df8d;
+            background: rgba(34, 197, 94, .09);
+            border-color: rgba(34, 197, 94, .14)
+        }
+
+        .service-state.failed {
+            color: #ff7b7b;
+            background: rgba(239, 68, 68, .10);
+            border-color: rgba(239, 68, 68, .15)
+        }
+
+        .service-state.restarting,
+        .service-state.activating,
+        .service-state.reloading {
+            color: #fbbf58;
+            background: rgba(245, 158, 11, .10);
+            border-color: rgba(245, 158, 11, .15)
+        }
+
+        .service-state.stopped {
+            color: #8e98af;
+            background: rgba(142, 152, 175, .08);
+            border-color: rgba(142, 152, 175, .12)
+        }
+
+        .port-badges {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            max-width: 170px
+        }
+
+        .port-badge {
+            padding: 4px 7px;
+            border-radius: 7px;
+            color: #67d9ff;
+            background: rgba(34, 211, 238, .09);
+            border: 1px solid rgba(34, 211, 238, .14);
+            font-size: 8px;
+            font-weight: 800
+        }
+
+        .service-meta {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 8px;
+            font-weight: 500
+        }
+
+        .service-inspector {
+            position: fixed;
+            z-index: 260;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(2, 4, 10, .78);
+            backdrop-filter: blur(10px)
+        }
+
+        .service-inspector.show {
+            display: flex
+        }
+
+        .service-inspector-card {
+            width: min(820px, 100%);
+            max-height: 85vh;
+            overflow: auto;
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            background: #111624;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, .55)
+        }
+
+        .service-inspector-head {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            background: #111624
+        }
+
+        .service-inspector-body {
+            padding: 20px
+        }
+
+        .service-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px
+        }
+
+        .service-detail-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, .025)
+        }
+
+        .service-detail-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 8px;
+            text-transform: uppercase
+        }
+
+        .service-detail-item strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 10px;
+            overflow-wrap: anywhere
+        }
+
+        .service-log {
+            margin-top: 15px;
+            padding: 14px;
+            max-height: 380px;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #080b14;
+            color: #cbd5e1;
+            font: 9px/1.65 monospace;
+            white-space: pre-wrap;
+            word-break: break-word
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand-mark">
+                    <i data-lucide="server-cog"></i>
+                </div>
+                <div>
+                    <div class="brand-title">Apira VPS <span>Control</span></div>
+                    <div class="brand-subtitle">Single server center</div>
+                </div>
+            </div>
+
+
+            <nav class="nav">
+                <button class="nav-item active" data-page="overview">
+                    <i data-lucide="layout-dashboard"></i>
+                    Overview
+                </button>
+
+                <button class="nav-item" data-page="resources">
+                    <i data-lucide="activity"></i>
+                    Resource Monitor
+                </button>
+
+                <button class="nav-item" data-page="services">
+                    <i data-lucide="blocks"></i>
+                    Services
+                    <span class="nav-badge" id="serviceCount">0</span>
+                </button>
+
+                <button class="nav-item" data-page="system">
+                    <i data-lucide="cpu"></i>
+                    System Information
+                </button>
+
+                <button class="nav-item" data-page="security">
+                    <i data-lucide="shield-check"></i>
+                    Security Center
+                    <span class="nav-badge" id="securityNavScore">--</span>
+                </button>
+            </nav>
+
+
+            <nav class="nav">
+                <button class="nav-item" data-page="tools">
+                    <i data-lucide="panels-top-left"></i>
+                    Tools Center
+                </button>
+
+
+
+                <button class="nav-item" id="notificationsNav" data-page="notifications">
+                    <i data-lucide="bell-ring"></i>
+                    Notifications
+                    <span class="nav-badge" id="notificationCount">0</span>
+                </button>
+
+                <button class="nav-item" id="settingsNav" data-page="settings">
+                    <i data-lucide="settings-2"></i>
+                    Settings
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="server-mini">
+                    <div class="server-mini-top">
+                        <span class="online-dot"></span>
+                        <div>
+                            <strong id="sidebarHostname">Loading...</strong>
+                            <span>Server is connected</span>
+                        </div>
+                    </div>
+
+                    <div class="mini-row">
+                        <span>IP address</span>
+                        <strong id="sidebar-server-ip">Loading...</strong>
+                    </div>
+
+                    <div class="mini-row">
+                        <span>Uptime</span>
+                        <strong id="server-uptime-display">Loading...</strong>
+                    </div>
+                </div>
+
+                <div class="user-card">
+                    <div class="avatar">AD</div>
+                    <div style="flex:1">
+                        <div class="user-name">Administrator</div>
+                        <div class="user-role">System Administrator</div>
+                    </div>
+                    <i data-lucide="chevrons-up-down" style="width:14px;color:var(--muted)"></i>
+                </div>
+            </div>
+        </aside>
+
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+
+        <main class="main">
+
+            <header class="topbar">
+                <button class="icon-btn menu-btn" id="menuButton">
+                    <i data-lucide="menu"></i>
+                </button>
+
+
+
+                <div class="top-actions">
+                    <button class="icon-btn" id="refreshButton" title="Refresh server data">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+
+                    <button class="icon-btn" id="notificationButton" title="Notifications">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-dot" id="notificationDot" hidden></span>
+                    </button>
+
+
+                </div>
+            </header>
+
+            <!-- Overview -->
+
+            <section class="page active" id="overview">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Server overview</div>
+                        <h1 id="timeGreeting">Welcome.</h1>
+                        <p class="page-description">
+                            Your server is online and all critical services are operational.
+                        </p>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                        <span class="live-badge">Live monitoring active</span>
+
+                        <button class="primary-btn" id="restartControlButton">
+                            <i data-lucide="rotate-cw"></i>
+                            Restart Apira VPS Control
+                        </button>
+                    </div>
+                </div>
+                <div class="stats">
+                    <!-- کارت CPU -->
+                    <article class="stat-card" style="--color:#a78bfa;--glow:#8b5cf6">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="cpu"></i></div>
+                            <!-- اضافه شدن id برای تعداد هسته -->
+                            <span class="trend" id="cpuCores">Loading...</span>
+                        </div>
+                        <div class="stat-value" id="cpuValue">--%</div>
+                        <div class="stat-label">CPU usage</div>
+                    </article>
+
+                    <!-- کارت RAM -->
+                    <article class="stat-card" style="--color:#52d67e;--glow:#22c55e">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="memory-stick"></i></div>
+                            <!-- اضافه شدن id برای کل رم -->
+                            <span class="trend" id="ramTotal">Loading...</span>
+                        </div>
+                        <div class="stat-value" id="ramValue">--%</div>
+                        <div class="stat-label">Memory usage</div>
+                    </article>
+
+                    <!-- کارت Storage (فعلا در این API نیست ولی ساختار حفظ می‌شود) -->
+                    <article class="stat-card" style="--color:#56b5ff;--glow:#3b82f6">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="hard-drive"></i></div>
+                            <span class="trend" id="diskTotal">Loading...</span>
+                        </div>
+                        <div class="stat-value" id="diskValue">--%</div>
+                        <div class="stat-label">Storage usage</div>
+                    </article>
+
+                    <!-- کارت Uptime -->
+                    <article class="stat-card" style="--color:#fbbf24;--glow:#f59e0b">
+                        <div class="stat-top">
+                            <div class="stat-icon"><i data-lucide="clock-3"></i></div>
+                            <!-- حذف شد یا می‌توانید بنویسید Active -->
+                            <span class="trend" id="uptimeStatus">Active</span>
+                        </div>
+                        <!-- اضافه شدن id برای مقدار آپتایم -->
+                        <div class="stat-value" id="uptimeValue">Loading...</div>
+                        <div class="stat-label">System uptime</div>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Live resource usage</div>
+                                <div class="panel-subtitle">
+                                    CPU, memory and network activity
+                                </div>
+                            </div>
+
+                            <div class="chart-legend">
+                                <span class="legend-item">
+                                    <i class="legend-dot" style="background:#9d72ff"></i>
+                                    CPU
+                                </span>
+                                <span class="legend-item">
+                                    <i class="legend-dot" style="background:#22d3ee"></i>
+                                    Memory
+                                </span>
+                                <span class="legend-item">
+                                    <i class="legend-dot" style="background:#22c55e"></i>
+                                    Network
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="panel-body">
+                            <div class="chart-wrap">
+                                <canvas id="resourceChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Infrastructure health</div>
+                                <div class="panel-subtitle">
+                                    Overall server health score
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-body">
+                            <div class="health-content">
+                                <div class="health-ring" id="healthRing">
+                                    <div class="health-value">
+                                        <strong id="healthValue">--</strong>
+                                        <span id="healthText">Loading...</span>
+                                    </div>
+                                </div>
+
+                                <div class="health-list">
+                                    <div class="health-row">
+                                        <span>Critical services</span>
+                                        <strong id="criticalServicesStatus">Checking...</strong>
+                                    </div>
+
+                                    <div class="health-row">
+                                        <span>Security status</span>
+                                        <strong id="securityStatus">Loading...</strong>
+                                    </div>
+
+                                    <div class="health-row">
+                                        <span>Pending updates</span>
+                                        <strong id="pendingUpdates">Loading...</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="dashboard-grid">
+                    <section class="panel traffic-panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Network traffic since boot</div>
+                                <div class="panel-subtitle">Interface <span id="trafficInterface">detecting...</span> · cumulative transfer and live throughput</div>
+                            </div>
+                            <span class="traffic-live"><i></i><span id="trafficCurrentRate">0 Mbps</span></span>
+                        </div>
+
+                        <div class="panel-body traffic-panel-body">
+                            <div class="traffic-totals">
+                                <div class="traffic-total download">
+                                    <div class="traffic-total-icon"><i data-lucide="arrow-down-to-line"></i></div>
+                                    <div><span>Downloaded</span><strong id="trafficDownloaded">0 B</strong></div>
+                                </div>
+                                <div class="traffic-total upload">
+                                    <div class="traffic-total-icon"><i data-lucide="arrow-up-from-line"></i></div>
+                                    <div><span>Uploaded</span><strong id="trafficUploaded">0 B</strong></div>
+                                </div>
+                                <div class="traffic-total combined">
+                                    <div class="traffic-total-icon"><i data-lucide="database"></i></div>
+                                    <div><span>Total traffic</span><strong id="trafficCombined">0 B</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="traffic-chart-head">
+                                <span>Live throughput</span>
+                                <div class="chart-legend">
+                                    <span class="legend-item"><i class="legend-dot" style="background:#22d3ee"></i>Download</span>
+                                    <span class="legend-item"><i class="legend-dot" style="background:#a78bfa"></i>Upload</span>
+                                </div>
+                            </div>
+                            <div class="traffic-chart-wrap">
+                                <canvas id="trafficChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Recent activity</div>
+                                <div class="panel-subtitle">Latest system events</div>
+                            </div>
+                        </div>
+
+                        <div class="panel-body" style="padding-top:5px;padding-bottom:5px">
+                            <div class="activity-list" id="activityList">
+                                <div class="activity-detail">Loading...</div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- Resource monitor -->
+
+            <section class="page" id="resources">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Live monitoring</div>
+                        <h1>Resource monitor</h1>
+                        <p class="page-description">
+                            Real-time utilization of your server hardware and network.
+                        </p>
+                    </div>
+
+                    <span class="live-badge">Updating every 3 seconds</span>
+                </div>
+
+                <div class="resource-grid" id="resourceGrid"></div>
+
+                <section class="panel" style="margin-top:18px">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Top processes</div>
+                            <div class="panel-subtitle">
+                                Processes currently consuming the most resources
+                            </div>
+                        </div>
+
+                        <button class="small-btn" id="refreshProcesses">
+                            <i data-lucide="refresh-cw"></i>
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Process</th>
+                                    <th>PID</th>
+                                    <th>User</th>
+                                    <th>CPU</th>
+                                    <th>Memory</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="processTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Services -->
+
+            <section class="page" id="services">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">System services</div>
+                        <h1>Service manager</h1>
+                        <p class="page-description">
+                            Top 100 installed services ordered by state, startup mode and real resource usage.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" id="restartAllServices">
+                        <i data-lucide="refresh-ccw"></i>
+                        Restart active services
+                    </button>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Installed services</div>
+                            <div class="panel-subtitle">
+                                Showing the top 100 of all installed services in a stable priority order
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Description</th>
+                                    <th>Startup</th>
+                                    <th>PID / User</th>
+                                    <th>CPU</th>
+                                    <th>Memory</th>
+                                    <th>Status</th>
+                                    <th>Listening ports</th>
+                                    <th>Last restart</th>
+                                    <th>Restart policy</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicesTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Tools -->
+
+            <section class="page" id="tools">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Extensions</div>
+                        <h1>Apira VPS tools center</h1>
+                        <p class="page-description">
+                            Install, update and open additional server management tools.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" id="checkAllUpdates">
+                        <i data-lucide="scan-search"></i>
+                        Check all updates
+                    </button>
+                </div>
+
+                <div class="tools-grid" id="toolsGrid"></div>
+            </section>
+
+            <!-- System information -->
+
+            <section class="page" id="system">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Hardware and software</div>
+                        <h1>System information</h1>
+                        <p class="page-description">
+                            Technical information about this server and operating system.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" id="copySystemInfo" type="button">
+                        <i data-lucide="copy"></i>
+                        Copy information
+                    </button>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Server specifications</div>
+                            <div class="panel-subtitle">
+                                Detected hardware, network and operating system
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="info-grid">
+
+                            <div class="info-item">
+                                <span>Hostname</span>
+                                <strong id="hostname">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Operating system</span>
+                                <strong id="osName">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Kernel</span>
+                                <strong id="kernelName">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Architecture</span>
+                                <strong id="architectureName">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>CPU</span>
+                                <strong id="cpuModel">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Total memory</span>
+                                <strong id="systemMemoryTotal">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Total storage</span>
+                                <strong id="systemDiskTotal">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Virtualization</span>
+                                <strong id="virtualizationType">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Public IP</span>
+                                <strong id="server-ip">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Private IP</span>
+                                <strong id="privateIp">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Primary interface</span>
+                                <strong id="primaryInterface">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>DNS resolver</span>
+                                <strong id="dnsResolver">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Data center</span>
+                                <strong id="dataCenter">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Time zone</span>
+                                <strong id="timeZone">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Server uptime</span>
+                                <strong id="systemUptime">Loading...</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <span>Apira VPS agent</span>
+                                <strong id="agentStatus">Loading...</strong>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Security center -->
+
+            <section class="page" id="security">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Server protection</div>
+                        <h1>Security Center</h1>
+                        <p class="page-description">
+                            A read-only security overview based on your live server configuration.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" id="refreshSecurity" type="button">
+                        <i data-lucide="scan-line"></i>
+                        Run security check
+                    </button>
+                </div>
+
+                <section class="security-hero panel">
+                    <div class="security-score-ring" id="securityScoreRing">
+                        <div>
+                            <strong id="securityScore">--</strong>
+                            <span>out of 100</span>
+                        </div>
+                    </div>
+                    <div class="security-hero-copy">
+                        <span class="security-kicker">Current security posture</span>
+                        <h2 id="securityGrade">Checking your server...</h2>
+                        <p id="securitySummary">Reviewing firewall, SSH, updates, access attempts and exposed network services.</p>
+                        <span class="security-checked" id="securityCheckedAt">Security scan in progress</span>
+                    </div>
+                    <div class="security-shield"><i data-lucide="shield-check"></i></div>
+                </section>
+
+                <div class="security-stats">
+                    <article class="security-stat panel">
+                        <div class="security-stat-icon purple"><i data-lucide="shield"></i></div>
+                        <span>Firewall</span>
+                        <strong id="securityFirewall">Checking...</strong>
+                        <small id="securityFirewallDetail">Detecting firewall policy</small>
+                    </article>
+                    <article class="security-stat panel">
+                        <div class="security-stat-icon blue"><i data-lucide="key-round"></i></div>
+                        <span>SSH access</span>
+                        <strong id="securitySsh">Checking...</strong>
+                        <small id="securitySshDetail">Reviewing authentication</small>
+                        <button class="small-btn security-configure-btn" id="changeSshPortButton" type="button">
+                            <i data-lucide="replace"></i>
+                            Change SSH port
+                        </button>
+                    </article>
+                    <article class="security-stat panel">
+                        <div class="security-stat-icon yellow"><i data-lucide="user-x"></i></div>
+                        <span>Failed logins · 24h</span>
+                        <strong id="securityFailedLogins">--</strong>
+                        <small>SSH authentication attempts</small>
+                    </article>
+                    <article class="security-stat panel">
+                        <div class="security-stat-icon green"><i data-lucide="package-check"></i></div>
+                        <span>Security updates</span>
+                        <strong id="securityUpdates">--</strong>
+                        <small id="securityUpdatesDetail">Checking package updates</small>
+                    </article>
+                </div>
+
+                <div class="security-layout">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Recommended actions</div>
+                                <div class="panel-subtitle">Prioritized improvements based on this server</div>
+                            </div>
+                        </div>
+                        <div class="security-recommendations" id="securityRecommendations">
+                            <div class="security-loading"><i data-lucide="loader-circle"></i> Building recommendations...</div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">Listening ports</div>
+                                <div class="panel-subtitle" id="securityPortsSummary">Detecting network listeners</div>
+                            </div>
+                        </div>
+                        <div class="security-ports-wrap">
+                            <table class="security-ports-table">
+                                <thead><tr><th>Port</th><th>Process</th><th>Binding</th><th>Exposure</th></tr></thead>
+                                <tbody id="securityPortsBody">
+                                    <tr><td colspan="4"><div class="security-loading"><i data-lucide="loader-circle"></i> Scanning ports...</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- Notifications -->
+
+            <section class="page" id="notifications">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Apira VPS updates</div>
+                        <h1>Notifications</h1>
+                        <p class="page-description">
+                            News, maintenance notices and important updates from Apira VPS.
+                        </p>
+                    </div>
+
+                    <button class="secondary-btn" id="refreshNotifications" type="button">
+                        <i data-lucide="refresh-cw"></i>
+                        Refresh notifications
+                    </button>
+                </div>
+
+                <div class="notification-summary">
+                    <div class="notification-summary-icon">
+                        <i data-lucide="radio"></i>
+                    </div>
+                    <div>
+                        <strong>Official announcement feed</strong>
+                        <span>Synced directly from the Apira VPS GitHub repository.</span>
+                    </div>
+                    <span class="notification-live"><i></i> Live feed</span>
+                </div>
+
+                <div class="notifications-grid" id="notificationsGrid">
+                    <div class="notification-empty">
+                        <i data-lucide="loader-circle"></i>
+                        <strong>Loading notifications...</strong>
+                        <span>Connecting to the official announcement feed.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings -->
+
+            <section class="page" id="settings">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">Account</div>
+                        <h1>Settings</h1>
+                        <p class="page-description">
+                            Manage your control panel session and account access.
+                        </p>
+                    </div>
+                </div>
+
+                <section class="panel settings-panel">
+                    <div class="settings-option">
+                        <div class="settings-option-icon">
+                            <i data-lucide="log-out"></i>
+                        </div>
+
+                        <div class="settings-option-copy">
+                            <strong>Sign out</strong>
+                            <span>End your current session and return to the sign-in page.</span>
+                        </div>
+
+                        <form action="/logout" method="post">
+                            <button class="danger-btn" type="submit">
+                                <i data-lucide="log-out"></i>
+                                Sign out
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- SSH port modal -->
+
+    <div class="modal-backdrop" id="sshPortModal">
+        <div class="modal ssh-port-modal" role="dialog" aria-modal="true" aria-labelledby="sshPortModalTitle">
+            <div class="modal-header">
+                <div>
+                    <div class="eyebrow">Protected configuration</div>
+                    <h2 id="sshPortModalTitle">Change SSH port</h2>
+                </div>
+                <button class="icon-btn" id="closeSshPortModal" type="button"><i data-lucide="x"></i></button>
+            </div>
+
+            <form id="sshPortForm">
+                <div class="ssh-port-warning">
+                    <i data-lucide="triangle-alert"></i>
+                    <p>Test a new SSH connection before closing your current session. The old firewall rule will be kept for recovery.</p>
+                </div>
+
+                <div class="ssh-port-fields">
+                    <label>
+                        <span>New SSH port</span>
+                        <input id="newSshPort" type="number" min="1024" max="65535" inputmode="numeric" required placeholder="Example: 2222">
+                        <small>Choose an unused port between 1024 and 65535.</small>
+                    </label>
+                    <label>
+                        <span>Administrator password</span>
+                        <input id="sshAdminPassword" type="password" autocomplete="current-password" required placeholder="Confirm this protected action">
+                        <small>Your panel password is verified by the server and is never stored here.</small>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-btn" id="cancelSshPort" type="button">Cancel</button>
+                    <button class="danger-btn" id="submitSshPort" type="submit">
+                        <i data-lucide="shield-check"></i>
+                        Validate and apply
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation modal -->
+
+    <div class="modal-backdrop" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modalTitle">Confirm action</h2>
+                    <p>This action affects the current server.</p>
+                </div>
+
+                <button class="icon-btn" id="closeModal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-warning">
+                    <i data-lucide="triangle-alert"></i>
+                    <div id="modalMessage">
+                        Are you sure you want to continue?
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="secondary-btn" id="cancelModal">Cancel</button>
+                <button class="danger-btn" id="confirmAction">
+                    <i data-lucide="check"></i>
+                    Confirm action
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const API = {
+                system: "/api/system",
+                resources: "/api/resources",
+                processes: "/api/processes",
+                services: "/api/services",
+                tools: "/api/tools",
+                activity: "/api/activity",
+                health: "/api/health",
+                security: "/api/security",
+                securitySshPort: "/api/security/ssh-port"
+            };
+
+            const NOTIFICATIONS_URL = "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications";
+
+            const state = {
+                services: [],
+                processes: [],
+                system: {},
+                resources: {},
+                pendingAction: null,
+                chartHistory: {
+                    cpu: Array(20).fill(0),
+                    memory: Array(20).fill(0),
+                    network: Array(20).fill(0)
+                },
+                trafficHistory: {
+                    download: Array(24).fill(0),
+                    upload: Array(24).fill(0)
+                },
+                tools: [],
+                activity: [],
+                health: {},
+                notifications: [],
+                security: {},
+                networkSample: null
+            };
+
+            const $ = id => document.getElementById(id);
+            const $$ = selector => [...document.querySelectorAll(selector)];
+
+            function updateTimeGreeting() {
+                const greetingElement = $("timeGreeting");
+                if (!greetingElement) return;
+
+                const hour = new Date().getHours();
+                let greeting = "Welcome";
+
+                if (hour >= 5 && hour < 12) greeting = "Good morning";
+                else if (hour >= 12 && hour < 17) greeting = "Good afternoon";
+                else if (hour >= 17 && hour < 21) greeting = "Good evening";
+                else greeting = "Good night";
+
+                greetingElement.textContent = `${greeting}.`;
+            }
+            const number = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+            const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, number(value)));
+            const round = (value, digits = 0) => Number(number(value).toFixed(digits));
+            const text = (id, value) => { const el = $(id); if (el) el.textContent = value ?? "—"; };
+            const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+            const capitalize = value => String(value || "").replace(/^./, char => char.toUpperCase());
+
+            function refreshIcons() {
+                if (window.lucide?.createIcons) window.lucide.createIcons();
+            }
+
+            async function fetchJson(url, options = {}) {
+                const response = await fetch(url, {
+                    headers: { "Accept": "application/json", ...(options.headers || {}) },
+                    cache: "no-store",
+                    ...options
+                });
+                if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+                return response.json();
+            }
+
+            function first(source, keys, fallback = undefined) {
+                for (const key of keys) {
+                    if (source && source[key] !== undefined && source[key] !== null) return source[key];
+                }
+                return fallback;
+            }
+
+            function percentFrom(source, percentKeys, usedKeys, totalKeys) {
+                const explicit = first(source, percentKeys);
+                if (explicit !== undefined) return clamp(explicit);
+                const used = number(first(source, usedKeys));
+                const total = number(first(source, totalKeys));
+                return total > 0 ? clamp((used / total) * 100) : 0;
+            }
+
+            function formatBytes(value) {
+                const bytes = number(value);
+                if (!bytes) return "0 B";
+                const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+                const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+                return `${round(bytes / Math.pow(1024, index), index > 1 ? 1 : 0)} ${units[index]}`;
+            }
+
+            function formatTrafficGigabytes(value) {
+                return `${(Math.max(0, number(value)) / (1024 ** 3)).toFixed(2)} GB`;
+            }
+
+            function formatCapacity(value, assumedUnit = "GB") {
+                if (value === undefined || value === null || value === "") return "—";
+                const n = number(value, NaN);
+                if (!Number.isFinite(n)) return String(value);
+                if (Math.abs(n) >= 1024 ** 2) return formatBytes(n);
+                return `${round(n, 1)} ${assumedUnit}`;
+            }
+
+            function formatUptime(value) {
+                let seconds = Number(value);
+                if (!Number.isFinite(seconds) || seconds < 0) return "Unavailable";
+                seconds = Math.floor(seconds);
+                const days = Math.floor(seconds / 86400);
+                const hours = Math.floor((seconds % 86400) / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const parts = [];
+                if (days > 0) parts.push(`${days}d`);
+                if (hours > 0 || days > 0) parts.push(`${hours}h`);
+                parts.push(`${minutes}m`);
+                return parts.join(" ");
+            }
+
+            function getLevel(value) {
+                const v = number(value);
+                if (v >= 85) return "critical";
+                if (v >= 70) return "warning";
+                return "normal";
+            }
+
+            function getProgressColor(value) {
+                if (value >= 85) return "linear-gradient(90deg,#ef4444,#fb7185)";
+                if (value >= 70) return "linear-gradient(90deg,#f59e0b,#fbbf24)";
+                return "linear-gradient(90deg,#8b5cf6,#22d3ee)";
+            }
+
+            function normalizeResources(data) {
+                const memoryTotal = number(first(data, ["memory_total", "ram_total"]));
+                const memoryUsed = number(first(data, ["memory_used", "ram_used"]));
+                const memoryAvailable = number(first(data, ["memory_available", "memory_free", "ram_available"], Math.max(memoryTotal - memoryUsed, 0)));
+                const diskTotal = number(first(data, ["disk_total", "storage_total"]));
+                const diskUsed = number(first(data, ["disk_used", "storage_used"]));
+                const diskFree = number(first(data, ["disk_free", "disk_available", "storage_free"], Math.max(diskTotal - diskUsed, 0)));
+                const swapTotal = number(first(data, ["swap_total"]));
+                const swapUsed = number(first(data, ["swap_used"]));
+
+                return {
+                    cpu: percentFrom(data, ["cpu", "cpu_percent"], [], []),
+                    memory: percentFrom(data, ["memory", "memory_percent", "ram_percent"], ["memory_used", "ram_used"], ["memory_total", "ram_total"]),
+                    disk: percentFrom(data, ["disk", "disk_percent"], ["disk_used", "storage_used"], ["disk_total", "storage_total"]),
+                    swap: percentFrom(data, ["swap", "swap_percent"], ["swap_used"], ["swap_total"]),
+                    network: clamp(first(data, ["network", "network_percent", "network_activity"], 0)),
+                    load: clamp(first(data, ["load", "load_percent"], 0)),
+                    temperature: number(first(data, ["temperature", "cpu_temperature"], 0)),
+                    connections: number(first(data, ["connections", "open_connections"], 0)),
+                    cores: number(first(data, ["cores", "cpu_count", "logical_cores"], first(state.system, ["cores", "cpu_count"], 0))),
+                    load1: number(first(data, ["load_1", "load1", "load_avg_1"], first(data, ["load_avg"], 0))),
+                    load5: number(first(data, ["load_5", "load5", "load_avg_5"], 0)),
+                    load15: number(first(data, ["load_15", "load15", "load_avg_15"], 0)),
+                    memoryTotal, memoryUsed, memoryAvailable,
+                    diskTotal, diskUsed, diskFree,
+                    swapTotal, swapUsed,
+                    download: first(data, ["download", "download_mbps", "network_download"]),
+                    upload: first(data, ["upload", "upload_mbps", "network_upload"]),
+                    networkBytesSent: number(first(data, ["network_bytes_sent", "bytes_sent"], NaN), NaN),
+                    networkBytesReceived: number(first(data, ["network_bytes_received", "bytes_received", "bytes_recv"], NaN), NaN),
+                    established: number(first(data, ["established", "established_connections"], 0)),
+                    listening: number(first(data, ["listening", "listening_connections"], 0))
+                };
+            }
+
+            function updateHistory(key, value) {
+                state.chartHistory[key].push(clamp(value));
+                if (state.chartHistory[key].length > 20) state.chartHistory[key].shift();
+            }
+
+            async function loadSystem({ silent = false } = {}) {
+                try {
+                    const data = await fetchJson(API.system);
+                    state.system = data || {};
+
+                    const hostname = first(data, ["hostname"], "Unavailable");
+                    const publicIp = first(data, ["public_ip", "publicIp", "ip"], "Unavailable");
+                    const privateIp = first(data, ["private_ip"], "Unavailable");
+                    const uptime = first(data, ["uptime"], 0);
+                    const osName = first(data, ["os", "os_name"], "Unavailable");
+                    const kernel = first(data, ["kernel"], "Unavailable");
+                    const architecture = first(data, ["architecture"], "Unavailable");
+                    const cpuModel = first(data, ["cpu_model", "cpu"], "Unavailable");
+                    const memoryTotal = first(data, ["memory_total"], null);
+                    const diskTotal = first(data, ["disk_total"], null);
+                    const primaryInterface = first(data, ["primary_interface"], "Unavailable");
+                    const timezone = first(data, ["timezone"], "Unavailable");
+                    const agentStatus = first(data, ["agent_status"], "online");
+                    const virtualization = first(data, ["virtualization", "virtualization_type"], "Unavailable");
+                    const dataCenter = first(data, ["data_center", "datacenter"], "Unavailable");
+                    const dnsResolvers = first(data, ["dns_resolvers"], []);
+
+                    text("sidebarHostname", hostname);
+                    text("overviewHostname", hostname);
+                    text("hostname", hostname);
+                    text("sidebar-server-ip", publicIp);
+                    text("system-server-ip", publicIp);
+                    text("server-ip", publicIp);
+                    const formattedUptime = formatUptime(uptime);
+                    text("server-uptime-display", formattedUptime);
+                    text("uptimeValue", formattedUptime);
+                    text("systemUptime", formattedUptime);
+                    text("uptimeStatus", Number(uptime) > 0 ? "Active" : "Unavailable");
+                    text("osName", osName);
+                    text("overviewOsName", osName);
+                    text("kernel", kernel);
+                    text("kernelName", kernel);
+                    text("architectureName", architecture);
+                    text("cpuModel", cpuModel);
+                    text("systemMemoryTotal", formatCapacity(memoryTotal));
+                    text("systemDiskTotal", formatCapacity(diskTotal));
+                    text("privateIp", privateIp);
+                    text("primaryInterface", primaryInterface);
+                    text("timeZone", timezone);
+                    text("agentStatus", capitalize(agentStatus));
+                    text("overviewVirtualization", virtualization);
+                    text("virtualizationType", virtualization);
+                    text("overviewDataCenter", dataCenter);
+                    text("dataCenter", dataCenter);
+                    text("dnsResolver", Array.isArray(dnsResolvers) ? (dnsResolvers.join(", ") || "Unavailable") : String(dnsResolvers || "Unavailable"));
+                } catch (error) {
+                    console.error("System API error:", error);
+                    if (!silent) toast("System error", "Could not load system information from the API.", "error");
+                }
+            }
+
+            async function loadResources({ silent = false } = {}) {
+                try {
+                    const raw = await fetchJson(API.resources);
+                    const resources = normalizeResources(raw);
+                    const now = Date.now();
+                    if (Number.isFinite(resources.networkBytesSent) && Number.isFinite(resources.networkBytesReceived)) {
+                        const previous = state.networkSample;
+                        resources.download = 0;
+                        resources.upload = 0;
+                        if (previous && resources.networkBytesSent >= previous.sent && resources.networkBytesReceived >= previous.received) {
+                            const seconds = Math.max((now - previous.timestamp) / 1000, 0.1);
+                            resources.download = round(((resources.networkBytesReceived - previous.received) * 8) / seconds / 1_000_000, 2);
+                            resources.upload = round(((resources.networkBytesSent - previous.sent) * 8) / seconds / 1_000_000, 2);
+                        }
+                        state.networkSample = { sent: resources.networkBytesSent, received: resources.networkBytesReceived, timestamp: now };
+                        resources.network = clamp(Math.log10(resources.download + resources.upload + 1) * 35);
+                    }
+                    state.resources = resources;
+                    state.trafficHistory.download.push(number(resources.download));
+                    state.trafficHistory.upload.push(number(resources.upload));
+                    if (state.trafficHistory.download.length > 24) state.trafficHistory.download.shift();
+                    if (state.trafficHistory.upload.length > 24) state.trafficHistory.upload.shift();
+                    text("trafficDownloaded", Number.isFinite(resources.networkBytesReceived) ? formatTrafficGigabytes(resources.networkBytesReceived) : "Unavailable");
+                    text("trafficUploaded", Number.isFinite(resources.networkBytesSent) ? formatTrafficGigabytes(resources.networkBytesSent) : "Unavailable");
+                    text("trafficCombined", Number.isFinite(resources.networkBytesReceived) && Number.isFinite(resources.networkBytesSent) ? formatTrafficGigabytes(resources.networkBytesReceived + resources.networkBytesSent) : "Unavailable");
+                    text("trafficCurrentRate", `${round(number(resources.download) + number(resources.upload), 2)} Mbps`);
+                    text("trafficInterface", first(raw, ["network_interface"], "all interfaces"));
+                    updateHistory("cpu", state.resources.cpu);
+                    updateHistory("memory", state.resources.memory);
+                    updateHistory("network", state.resources.network);
+                    text("cpuValue", `${round(state.resources.cpu)}%`);
+                    text("ramValue", `${round(state.resources.memory)}%`);
+                    text("diskValue", `${round(state.resources.disk)}%`);
+                    text("cpuCores", state.resources.cores ? `${state.resources.cores} cores` : "Cores unavailable");
+                    text("ramTotal", state.resources.memoryTotal ? formatCapacity(state.resources.memoryTotal) : "Capacity unavailable");
+                    text("diskTotal", state.resources.diskTotal ? formatCapacity(state.resources.diskTotal) : "Capacity unavailable");
+                    renderResources();
+                    updateHealth();
+                    drawChart();
+                    drawTrafficChart();
+                } catch (error) {
+                    console.error("Resource API error:", error);
+                    text("cpuCores", "Unavailable");
+                    text("ramTotal", "Unavailable");
+                    text("diskTotal", "Unavailable");
+                    if (!silent) toast("Resource error", "Could not load live resource information.", "error");
+                }
+            }
+
+            function renderResources() {
+                const grid = $("resourceGrid");
+                if (!grid) return;
+                const r = state.resources;
+                const resources = [
+                    { name: "CPU Usage", icon: "cpu", value: round(r.cpu), suffix: "%", detail: r.cores ? `${r.cores} virtual cores` : "Core count unavailable", secondary: `Load: ${round(r.load1, 2)}` },
+                    { name: "Memory Usage", icon: "memory-stick", value: round(r.memory), suffix: "%", detail: r.memoryTotal ? `${formatBytes(r.memoryUsed)} of ${formatBytes(r.memoryTotal)}` : "Capacity unavailable", secondary: r.memoryTotal ? `${formatBytes(r.memoryAvailable)} available` : "—" },
+                    { name: "Disk Usage", icon: "hard-drive", value: round(r.disk), suffix: "%", detail: r.diskTotal ? `${formatBytes(r.diskUsed)} of ${formatBytes(r.diskTotal)}` : "Capacity unavailable", secondary: r.diskTotal ? `${formatBytes(r.diskFree)} available` : "—" },
+                    { name: "Swap Usage", icon: "layers-3", value: round(r.swap), suffix: "%", detail: r.swapTotal ? `${formatBytes(r.swapUsed)} of ${formatBytes(r.swapTotal)}` : "Swap unavailable", secondary: getLevel(r.swap) },
+                    { name: "Network Activity", icon: "network", value: round(number(r.download) + number(r.upload), 2), suffix: " Mbps", detail: `Download: ${round(r.download, 2)} Mbps`, secondary: `Upload: ${round(r.upload, 2)} Mbps`, progressValue: r.network },
+                    { name: "System Load", icon: "gauge", value: round(r.load || (r.cores ? (r.load1 / r.cores) * 100 : 0)), suffix: "%", detail: `1m: ${round(r.load1, 2)} · 5m: ${round(r.load5, 2)}`, secondary: `15m: ${round(r.load15, 2)}` },
+                    { name: "CPU Temperature", icon: "thermometer", value: round(r.temperature), suffix: "°C", detail: r.temperature ? "Current temperature" : "Sensor unavailable", secondary: "", progressValue: clamp(r.temperature) },
+                    { name: "Open Connections", icon: "waypoints", value: round(r.connections), suffix: "", detail: `${r.established} established`, secondary: `${r.listening} listening`, progressValue: clamp((r.connections / 300) * 100) }
+                ];
+
+                grid.innerHTML = resources.map(item => {
+                    const progress = item.progressValue ?? clamp(item.value);
+                    const level = getLevel(progress);
+                    const statusClass = level === "critical" ? "failed" : level === "warning" ? "warning" : "success";
+                    return `<article class="resource-card">
+                <div class="resource-head"><div class="resource-name"><i data-lucide="${item.icon}"></i>${escapeHtml(item.name)}</div><span class="status ${statusClass}">${level}</span></div>
+                <div class="resource-number">${escapeHtml(item.value)}${escapeHtml(item.suffix)}</div>
+                <div class="progress" style="margin-top:13px"><div class="progress-fill" style="width:${progress}%;background:${getProgressColor(progress)}"></div></div>
+                <div class="resource-meta"><span>${escapeHtml(item.detail)}</span><span>${escapeHtml(item.secondary)}</span></div>
+            </article>`;
+                }).join("");
+                refreshIcons();
+            }
+            document
+                .getElementById("copySystemInfo")
+                ?.addEventListener("click", async () => {
+                    const fields = [
+                        ["Hostname", "hostname"],
+                        ["Operating system", "osName"],
+                        ["Kernel", "kernelName"],
+                        ["Architecture", "architectureName"],
+                        ["CPU", "cpuModel"],
+                        ["Total memory", "systemMemoryTotal"],
+                        ["Total storage", "systemDiskTotal"],
+                        ["Virtualization", "virtualizationType"],
+                        ["Public IP", "server-ip"],
+                        ["Private IP", "privateIp"],
+                        ["Primary interface", "primaryInterface"],
+                        ["DNS resolver", "dnsResolver"],
+                        ["Data center", "dataCenter"],
+                        ["Time zone", "timeZone"],
+                        ["Server uptime", "systemUptime"],
+                        ["Apira VPS agent", "agentStatus"]
+                    ];
+
+                    const text = fields
+                        .map(([label, id]) => {
+                            const value =
+                                document.getElementById(id)?.textContent?.trim() ||
+                                "Unavailable";
+
+                            return `${label}: ${value}`;
+                        })
+                        .join("\n");
+
+                    try {
+                        await navigator.clipboard.writeText(text);
+
+                        toast(
+                            "System information copied",
+                            "Server specifications were copied to the clipboard."
+                        );
+                    } catch (error) {
+                        console.error("Unable to copy system information:", error);
+
+                        toast(
+                            "Copy unavailable",
+                            "Clipboard access is not available in this browser.",
+                            "error"
+                        );
+                    }
+                });
+
+            async function loadProcesses({ silent = false } = {}) {
+                try {
+                    const data = await fetchJson(API.processes);
+                    state.processes = Array.isArray(data) ? data : data.processes || [];
+                    renderProcesses();
+                } catch (error) {
+                    console.error("Process API error:", error);
+                    if (!silent) toast("Process error", "Could not load process list.", "error");
+                }
+            }
+
+            function renderProcesses() {
+                const table = $("processTable");
+                if (!table) return;
+                table.innerHTML = state.processes.map(proc => `<tr>
+            <td><span class="service-name"><i data-lucide="binary"></i>${escapeHtml(proc.name)}</span></td>
+            <td>${escapeHtml(proc.pid)}</td><td>${escapeHtml(proc.user || proc.username || "—")}</td>
+            <td>${escapeHtml(round(proc.cpu ?? proc.cpu_percent, 1))}%</td>
+            <td>${escapeHtml(proc.memory_human || `${round(proc.memory ?? proc.memory_percent, 1)}%`)}</td>
+            <td><span class="status success">Running</span></td>
+        </tr>`).join("");
+                refreshIcons();
+            }
+
+            async function loadServices({ silent = false } = {}) {
+                try {
+                    const data = await fetchJson(API.services);
+                    const list = Array.isArray(data) ? data : data.services || [];
+                    state.services = list.map(service => ({
+                        id: service.unit || service.id || service.name,
+                        name: service.name || service.display_name || "Unknown service",
+                        icon: service.icon || "server-cog",
+                        description: service.description || "Managed system service",
+                        version: service.enable_state || "—",
+                        memory: Number.isFinite(Number(service.memory_bytes))
+                            ? formatCapacity(Number(service.memory_bytes))
+                            : "—",
+                        status: String(service.status || "inactive").toLowerCase(),
+                        running: Boolean(service.running),
+                        enabled: Boolean(service.enabled),
+                        protected: Boolean(service.protected),
+                        pid: service.pid ?? null,
+                        user: service.user || "—",
+                        cpu: Number(service.cpu_percent || 0),
+                        uptime: service.uptime,
+                        ports: Array.isArray(service.ports) ? service.ports : [],
+                        restartPolicy: service.restart_policy || "no",
+                        restartCount: Number(service.restart_count || 0),
+                        lastResult: service.last_result || "unknown",
+                        startedAt: service.started_at || null,
+                        lastActiveAt: service.last_active_at || null,
+                        lastInactiveAt: service.last_inactive_at || null,
+                        subStatus: service.sub_status || "unknown",
+                        fragmentPath: service.fragment_path || null,
+                        loadState: service.load_state || "unknown",
+                        group: service.group || "—",
+                        processCount: Number(service.process_count || 0)
+                    }));
+                    renderServices();
+                    text("serviceCount", state.services.length);
+                    updateHealth();
+                } catch (error) {
+                    console.error("Services API error:", error);
+                    if (!silent) toast("Service error", "Could not load service status.", "error");
+                }
+            }
+
+            function serviceStateMeta(service) {
+                const status = String(service.status || "unknown").toLowerCase();
+                const sub = String(service.subStatus || "").toLowerCase();
+                if (status === "active" && ["auto-restart", "start-pre", "start-post"].includes(sub)) return { label: "Restarting", cls: "restarting" };
+                if (status === "active") return { label: "Running", cls: "running" };
+                if (status === "failed") return { label: "Failed", cls: "failed" };
+                if (["activating", "reloading"].includes(status)) return { label: capitalize(status), cls: status };
+                return { label: status === "inactive" ? "Stopped" : capitalize(status), cls: "stopped" };
+            }
+
+            function formatServiceTime(value) {
+                if (!value || value === "n/a") return "—";
+                const parsed = new Date(value);
+                return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+            }
+
+            function renderServices() {
+                const table = $("servicesTable");
+                if (!table) return;
+                table.innerHTML = state.services.map((service, index) => {
+                    const running = service.running || service.status === "active";
+                    const protectedStop = service.protected ? "disabled" : "";
+                    const stateMeta = serviceStateMeta(service);
+                    const ports = service.ports.length
+                        ? `<div class="port-badges">${service.ports.map(port => `<span class="port-badge">:${escapeHtml(port)}</span>`).join("")}</div>`
+                        : `<span class="service-meta">No listening port</span>`;
+                    return `<tr>
+                        <td><span class="service-name"><i data-lucide="${escapeHtml(service.icon)}"></i><span>${escapeHtml(service.name)}<small class="service-meta">${escapeHtml(service.subStatus)} · ${service.processCount} process${service.processCount === 1 ? "" : "es"}</small></span></span></td>
+                        <td>${escapeHtml(service.description)}</td>
+                        <td>${escapeHtml(service.enabled ? "Enabled" : service.version)}${service.protected ? '<span class="service-meta">Protected</span>' : ''}</td>
+                        <td>${escapeHtml(service.pid ? `${service.pid} / ${service.user}` : service.user)}</td>
+                        <td>${escapeHtml(round(service.cpu, 1))}%</td>
+                        <td>${escapeHtml(service.memory)}</td>
+                        <td><span class="service-state ${stateMeta.cls}">${escapeHtml(stateMeta.label)}</span></td>
+                        <td>${ports}</td>
+                        <td>${escapeHtml(formatServiceTime(service.lastActiveAt || service.startedAt))}<span class="service-meta">${escapeHtml(service.uptime == null ? "No active runtime" : formatUptime(service.uptime))}</span></td>
+                        <td>${escapeHtml(service.restartPolicy)}<span class="service-meta">${service.restartCount} restart${service.restartCount === 1 ? "" : "s"} · ${escapeHtml(service.lastResult)}</span></td>
+                        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+                            <button class="small-btn service-action" data-index="${index}" data-action="${running ? "stop" : "start"}" ${running ? protectedStop : ""}><i data-lucide="${running ? "square" : "play"}"></i>${running ? "Stop" : "Start"}</button>
+                            <button class="small-btn service-action" data-index="${index}" data-action="restart"><i data-lucide="refresh-cw"></i>Restart</button>
+                            <button class="small-btn service-action" data-index="${index}" data-action="${service.enabled ? "disable" : "enable"}" ${service.enabled ? protectedStop : ""}><i data-lucide="power"></i>${service.enabled ? "Disable" : "Enable"}</button>
+                            <button class="small-btn service-details" data-index="${index}"><i data-lucide="panel-top-open"></i>Details</button>
+                            <button class="small-btn service-logs" data-index="${index}"><i data-lucide="scroll-text"></i>Logs</button>
+                        </div></td>
+                    </tr>`;
+                }).join("");
+                $$(".service-action").forEach(button => button.addEventListener("click", () => controlService(Number(button.dataset.index), button.dataset.action)));
+                $$(".service-details").forEach(button => button.addEventListener("click", () => showServiceInspector(Number(button.dataset.index), false)));
+                $$(".service-logs").forEach(button => button.addEventListener("click", () => showServiceInspector(Number(button.dataset.index), true)));
+                refreshIcons();
+            }
+
+            async function showServiceInspector(index, loadLogs = false) {
+                const service = state.services[index];
+                if (!service) return;
+                let inspector = $("serviceInspector");
+                if (!inspector) {
+                    inspector = document.createElement("div");
+                    inspector.id = "serviceInspector";
+                    inspector.className = "service-inspector";
+                    document.body.appendChild(inspector);
+                }
+                const details = [
+                    ["Unit", service.id], ["Status", `${service.status} / ${service.subStatus}`], ["Startup", service.enabled ? "Enabled" : service.version],
+                    ["PID / User", service.pid ? `${service.pid} / ${service.user}` : service.user], ["CPU", `${round(service.cpu, 1)}%`], ["Memory", service.memory],
+                    ["Listening ports", service.ports.length ? service.ports.join(", ") : "None"], ["Last restart", formatServiceTime(service.lastActiveAt || service.startedAt)], ["Auto restart", service.restartPolicy],
+                    ["Restart count", service.restartCount], ["Last result", service.lastResult], ["Unit file", service.fragmentPath || "—"]
+                ];
+                inspector.innerHTML = `<div class="service-inspector-card"><div class="service-inspector-head"><div><strong>${escapeHtml(service.name)}</strong><span class="service-meta">${escapeHtml(service.description)}</span></div><button class="icon-btn" id="closeServiceInspector"><i data-lucide="x"></i></button></div><div class="service-inspector-body"><div class="service-detail-grid">${details.map(([k, v]) => `<div class="service-detail-item"><span>${escapeHtml(k)}</span><strong>${escapeHtml(v ?? "—")}</strong></div>`).join("")}</div><pre class="service-log" id="serviceLogBox">${loadLogs ? "Loading journal logs…" : "Select Logs to load the latest 120 journal entries."}</pre></div></div>`;
+                inspector.classList.add("show");
+                $("closeServiceInspector")?.addEventListener("click", () => inspector.classList.remove("show"));
+                inspector.addEventListener("click", event => { if (event.target === inspector) inspector.classList.remove("show"); }, { once: true });
+                refreshIcons();
+                if (loadLogs) {
+                    try {
+                        const data = await fetchJson(`/api/services/${encodeURIComponent(service.id)}/logs`);
+                        text("serviceLogBox", data.logs || "No journal entries found.");
+                    } catch (error) {
+                        text("serviceLogBox", error.message || "Could not load service logs.");
+                    }
+                }
+            }
+
+            async function controlService(index, action) {
+                const service = state.services[index];
+                if (!service || !action) return;
+                openConfirmation(
+                    `${capitalize(action)} service`,
+                    `${capitalize(action)} ${service.name}?`,
+                    async () => {
+                        try {
+                            await fetchJson(`/api/services/${encodeURIComponent(service.id)}/${encodeURIComponent(action)}`, {
+                                method: "POST"
+                            });
+                            toast("Service updated", `${service.name}: ${action} completed successfully.`);
+                            await loadServices({ silent: true });
+                        } catch (error) {
+                            console.error(error);
+                            toast("Service action failed", error.message || `Could not ${action} ${service.name}.`, "error");
+                        }
+                    }
+                );
+            }
+
+            function updateHealth() {
+                const usage = [state.resources.cpu, state.resources.memory, state.resources.disk].filter(Number.isFinite);
+                const running = state.services.filter(s => ["running", "active"].includes(s.status)).length;
+                const serviceScore = state.services.length ? (running / state.services.length) * 100 : 100;
+                const resourceScore = usage.length ? 100 - Math.max(...usage.map(v => Math.max(0, v - 55) * 1.4)) : 100;
+                const health = Math.round(clamp((serviceScore * 0.55) + (resourceScore * 0.45)));
+                text("healthValue", `${health}%`);
+                text("healthText", health >= 90 ? "Healthy" : health >= 75 ? "Needs attention" : "Critical");
+                text("criticalServicesStatus", state.services.length ? `${running}/${state.services.length} running` : "Unavailable");
+                const ring = $("healthRing");
+                if (ring) ring.style.setProperty("--health", String(health));
+            }
+
+            function drawChart() {
+                const canvas = $("resourceChart");
+                if (!canvas || !canvas.offsetWidth) return;
+                const ratio = window.devicePixelRatio || 1;
+                const width = canvas.offsetWidth;
+                const height = canvas.offsetHeight;
+                canvas.width = width * ratio; canvas.height = height * ratio;
+                const ctx = canvas.getContext("2d");
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                ctx.clearRect(0, 0, width, height);
+                const padding = { top: 15, right: 10, bottom: 24, left: 10 };
+                const chartWidth = width - padding.left - padding.right;
+                const chartHeight = height - padding.top - padding.bottom;
+                ctx.strokeStyle = "rgba(255,255,255,.07)"; ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) { const y = padding.top + (chartHeight / 4) * i; ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(width - padding.right, y); ctx.stroke(); }
+                const drawLine = (values, color, fillColor) => {
+                    if (values.length < 2) return;
+                    const step = chartWidth / (values.length - 1); ctx.beginPath();
+                    values.forEach((value, index) => { const x = padding.left + index * step; const y = padding.top + chartHeight - (clamp(value) / 100) * chartHeight; index ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+                    ctx.lineWidth = 2.2; ctx.strokeStyle = color; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke();
+                    ctx.lineTo(width - padding.right, padding.top + chartHeight); ctx.lineTo(padding.left, padding.top + chartHeight); ctx.closePath();
+                    const gradient = ctx.createLinearGradient(0, padding.top, 0, height); gradient.addColorStop(0, fillColor); gradient.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = gradient; ctx.fill();
+                };
+                drawLine(state.chartHistory.memory, "#22d3ee", "rgba(34,211,238,.12)");
+                drawLine(state.chartHistory.network, "#22c55e", "rgba(34,197,94,.08)");
+                drawLine(state.chartHistory.cpu, "#9d72ff", "rgba(139,92,246,.15)");
+            }
+
+            function drawTrafficChart() {
+                const canvas = $("trafficChart");
+                if (!canvas || !canvas.offsetWidth) return;
+                const ratio = window.devicePixelRatio || 1;
+                const width = canvas.offsetWidth;
+                const height = canvas.offsetHeight;
+                canvas.width = width * ratio;
+                canvas.height = height * ratio;
+                const ctx = canvas.getContext("2d");
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                ctx.clearRect(0, 0, width, height);
+
+                const padding = { top: 10, right: 5, bottom: 8, left: 5 };
+                const chartWidth = width - padding.left - padding.right;
+                const chartHeight = height - padding.top - padding.bottom;
+                const allValues = [...state.trafficHistory.download, ...state.trafficHistory.upload];
+                const maxValue = Math.max(0.1, ...allValues) * 1.15;
+
+                ctx.strokeStyle = "rgba(255,255,255,.055)";
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 3; i++) {
+                    const y = padding.top + (chartHeight / 3) * i;
+                    ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(width - padding.right, y); ctx.stroke();
+                }
+
+                const drawTrafficLine = (values, color, fillColor) => {
+                    if (values.length < 2) return;
+                    const step = chartWidth / (values.length - 1);
+                    ctx.beginPath();
+                    values.forEach((value, index) => {
+                        const x = padding.left + index * step;
+                        const y = padding.top + chartHeight - (Math.max(0, value) / maxValue) * chartHeight;
+                        index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+                    });
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = color;
+                    ctx.lineJoin = "round";
+                    ctx.lineCap = "round";
+                    ctx.stroke();
+                    ctx.lineTo(width - padding.right, padding.top + chartHeight);
+                    ctx.lineTo(padding.left, padding.top + chartHeight);
+                    ctx.closePath();
+                    const gradient = ctx.createLinearGradient(0, padding.top, 0, height);
+                    gradient.addColorStop(0, fillColor);
+                    gradient.addColorStop(1, "rgba(0,0,0,0)");
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                };
+
+                drawTrafficLine(state.trafficHistory.download, "#22d3ee", "rgba(34,211,238,.12)");
+                drawTrafficLine(state.trafficHistory.upload, "#a78bfa", "rgba(139,92,246,.1)");
+            }
+
+            function toast(title, message, type = "success") {
+                const container = $("toastContainer");
+                if (!container) return;
+                const item = document.createElement("div");
+                const icon = type === "error" ? "circle-x" : type === "warning" ? "triangle-alert" : "circle-check";
+                item.className = "toast";
+                item.innerHTML = `<div class="toast-icon"><i data-lucide="${icon}"></i></div><div><div class="toast-title">${escapeHtml(title)}</div><div class="toast-message">${escapeHtml(message)}</div></div><button class="toast-close"><i data-lucide="x"></i></button>`;
+                container.appendChild(item); refreshIcons();
+                const remove = () => { item.style.opacity = "0"; item.style.transform = "translateX(20px)"; setTimeout(() => item.remove(), 200); };
+                item.querySelector(".toast-close")?.addEventListener("click", remove); setTimeout(remove, 4500);
+            }
+
+            function openConfirmation(title, message, action) {
+                text("modalTitle", title); text("modalMessage", message); state.pendingAction = action;
+                $("confirmModal")?.classList.add("show"); document.body.style.overflow = "hidden";
+            }
+            function closeConfirmation() { $("confirmModal")?.classList.remove("show"); document.body.style.overflow = ""; state.pendingAction = null; }
+
+            function navigateTo(pageId) {
+                $$(".page").forEach(page => page.classList.toggle("active", page.id === pageId));
+                $$(".nav-item[data-page]").forEach(item => item.classList.toggle("active", item.dataset.page === pageId));
+                $("sidebar")?.classList.remove("open"); $("mobileOverlay")?.classList.remove("show");
+                window.scrollTo({ top: 0, behavior: "smooth" }); refreshIcons(); if (pageId === "overview") setTimeout(() => { drawChart(); drawTrafficChart(); }, 50);
+            }
+
+            async function loadTools({ silent = false } = {}) {
+                try {
+                    const data = await fetchJson(API.tools);
+                    state.tools = Array.isArray(data) ? data : (Array.isArray(data.tools) ? data.tools : []);
+                    renderTools();
+                } catch (error) {
+                    state.tools = [];
+                    renderTools();
+                    if (!silent) toast("Tools error", "Could not load tools from the API.", "error");
+                }
+            }
+
+            function renderTools() {
+                const grid = $("toolsGrid");
+                if (!grid) return;
+                if (!state.tools.length) {
+                    grid.innerHTML = '<div class="panel"><div class="panel-body"><div class="activity-detail">No extensions were returned by the repository manifest.</div></div></div>';
+                    return;
+                }
+
+                grid.innerHTML = state.tools.map(tool => {
+                    const installed = Boolean(tool.installed);
+                    const updateAvailable = Boolean(tool.update_available);
+                    const statusClass = updateAvailable ? "warning" : installed ? "success" : "stopped";
+                    const statusLabel = updateAvailable ? "Update available" : installed ? "Installed" : "Not installed";
+                    const coreTool = Boolean(tool.core)
+                        || String(tool.name || "").trim().toLowerCase() === "wevpscontrol";
+                    const action = updateAvailable ? "update" : coreTool ? "none" : installed ? "remove" : "install";
+                    const actionLabel = updateAvailable ? "Update" : coreTool ? "Up to date" : installed ? "Uninstall" : "Install";
+                    const actionIcon = updateAvailable ? "refresh-cw" : coreTool ? "check-circle" : installed ? "trash-2" : "download";
+                    const canRunAction = updateAvailable ? tool.can_update : coreTool ? false : installed ? true : tool.can_install;
+                    const openButton = installed && tool.open_url
+                        ? `<a class="secondary-btn" href="${escapeHtml(tool.open_url)}" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link"></i>Open</a>`
+                        : "";
+                    const actionButton = coreTool && !updateAvailable
+                        ? ""
+                        : `<button class="${action === "remove" ? "danger-btn" : "primary-btn"} tool-action"
+                                data-tool="${escapeHtml(tool.name)}" data-action="${action}" ${canRunAction ? "" : "disabled"}>
+                                <i data-lucide="${actionIcon}"></i>${actionLabel}
+                           </button>`;
+
+                    return `<article class="tool-card">
+                        <div class="tool-top">
+                            <div class="tool-icon"><i data-lucide="package"></i></div>
+                            <div style="flex:1">
+                                <h3>${escapeHtml(tool.name || "Unnamed extension")}</h3>
+                                <div style="margin-top:7px"><span class="status ${statusClass}">${escapeHtml(statusLabel)}</span></div>
+                            </div>
+                        </div>
+                        <p class="tool-description">${escapeHtml(tool.description || "Apira VPS extension")}</p>
+                        <div class="tool-info">
+                            <div class="tool-info-item"><span>Installed version</span><strong>${escapeHtml(tool.version ?? "—")}</strong></div>
+                            <div class="tool-info-item"><span>Latest version</span><strong>${escapeHtml(tool.latest ?? "—")}</strong></div>
+                        </div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+                            ${openButton}
+                            ${actionButton}
+                        </div>
+                    </article>`;
+                }).join("");
+
+                $$(".tool-action").forEach(button => {
+                    button.addEventListener("click", () => {
+                        const name = button.dataset.tool;
+                        const action = button.dataset.action;
+                        openConfirmation(
+                            `${capitalize(action)} ${name}`,
+                            `Are you sure you want to ${action} ${name}?`,
+                            () => manageTool(name, action, button)
+                        );
+                    });
+                });
+                refreshIcons();
+            }
+
+            async function manageTool(name, action, button) {
+                button.disabled = true;
+                const original = button.innerHTML;
+                button.innerHTML = '<i data-lucide="loader-circle"></i>Working...';
+                refreshIcons();
+                try {
+                    const response = await fetch(`/api/tools/${encodeURIComponent(name)}/${encodeURIComponent(action)}`, {
+                        method: "POST",
+                        headers: { "Accept": "application/json" }
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.success === false) throw new Error(data.message || `HTTP ${response.status}`);
+                    toast("Extensions", data.message || `${name} ${action} completed`, "success");
+                    await loadTools({ silent: true });
+                } catch (error) {
+                    toast("Extension error", error.message || "Operation failed", "error");
+                    button.disabled = false;
+                    button.innerHTML = original;
+                    refreshIcons();
+                }
+            }
+
+            async function loadActivity({ silent = false } = {}) {
+                const list = $("activityList");
+                try {
+                    const data = await fetchJson(API.activity);
+                    state.activity = Array.isArray(data) ? data : (Array.isArray(data.activity) ? data.activity : []);
+                    if (!list) return;
+                    if (!state.activity.length) {
+                        list.innerHTML = '<div class="activity-detail">No activity data returned by API.</div>';
+                        return;
+                    }
+                    list.innerHTML = state.activity.map(item => {
+                        const status = String(item.status || "unknown").toLowerCase();
+                        const statusClass = status === "success" || status === "running" ? "success" : status === "warning" ? "warning" : "failed";
+                        return `<div class="activity"><div class="activity-icon"><i data-lucide="${escapeHtml(item.icon || "activity")}"></i></div><div><div class="activity-title">${escapeHtml(item.title || "")}</div><div class="activity-detail">${escapeHtml(item.detail || item.message || "")}</div></div><span class="status ${statusClass}">${escapeHtml(capitalize(status))}</span></div>`;
+                    }).join("");
+                    refreshIcons();
+                } catch (error) {
+                    if (list) list.innerHTML = '<div class="activity-detail">Activity API unavailable.</div>';
+                    if (!silent) toast("Activity error", "Could not load activity from the API.", "error");
+                }
+            }
+
+            async function loadHealth({ silent = false } = {}) {
+                try {
+                    const data = await fetchJson(API.health);
+                    state.health = data || {};
+                    const score = number(first(data, ["score", "health", "health_score"]), NaN);
+                    text("healthValue", Number.isFinite(score) ? `${round(clamp(score))}%` : "—");
+                    if ($("healthRing") && Number.isFinite(score)) $("healthRing").style.setProperty("--health", clamp(score));
+                    text("healthText", first(data, ["label", "status_text", "message"], "Unavailable"));
+                    text("criticalServicesStatus", first(data, ["critical_services", "services_status"], "Unavailable"));
+                    text("securityStatus", first(data, ["security_status", "security"], "Unavailable"));
+                    const pending = first(data, ["pending_updates", "updates"]);
+                    text("pendingUpdates", pending === undefined ? "Unavailable" : String(pending));
+                } catch (error) {
+                    text("healthValue", "—");
+                    text("healthText", "Unavailable");
+                    text("criticalServicesStatus", "Unavailable");
+                    text("securityStatus", "Unavailable");
+                    text("pendingUpdates", "Unavailable");
+                    if (!silent) toast("Health error", "Could not load health information from the API.", "error");
+                }
+            }
+
+            function renderSecurity() {
+                const data = state.security || {};
+                const score = clamp(first(data, ["score"], 0));
+                const grade = first(data, ["grade"], "Unavailable");
+                const firewall = first(data, ["firewall"], {});
+                const ssh = first(data, ["ssh"], {});
+                const failedLogins = number(first(data, ["failed_logins_24h"], 0));
+                const securityUpdates = number(first(data, ["security_updates"], 0));
+                const totalUpdates = number(first(data, ["updates"], 0));
+                const ports = Array.isArray(data.listening_ports) ? data.listening_ports : [];
+                const recommendations = Array.isArray(data.recommendations) ? data.recommendations : [];
+
+                const color = score >= 90 ? "#22c55e" : score >= 75 ? "#3b82f6" : score >= 55 ? "#f59e0b" : "#ef4444";
+                const hero = document.querySelector(".security-hero");
+                if (hero) hero.style.setProperty("--security-color", color);
+                const ring = $("securityScoreRing");
+                if (ring) ring.style.setProperty("--score", String(score));
+
+                text("securityScore", String(score));
+                text("securityGrade", grade);
+                text("securitySummary", score >= 90 ? "Your core server security controls look strong." : score >= 75 ? "The server is in good shape, with a few improvements recommended." : score >= 55 ? "Several security controls need your attention." : "Important security risks require prompt review.");
+                text("securityNavScore", String(score));
+                text("securityStatus", `${grade} · ${score}/100`);
+                text("securityFirewall", first(firewall, ["status"], "Unavailable"));
+                text("securityFirewallDetail", `${first(firewall, ["name"], "Firewall")} · ${number(first(firewall, ["rules"], 0))} rule(s)`);
+                text("securitySsh", ssh.secure ? "Hardened" : "Needs review");
+                text("securitySshDetail", `Port ${number(ssh.port, 22)} · Password ${ssh.password_authentication ? "on" : "off"}`);
+                text("securityFailedLogins", String(failedLogins));
+                text("securityUpdates", String(securityUpdates));
+                text("securityUpdatesDetail", `${totalUpdates} total package update(s)`);
+
+                const checkedAt = Number(data.checked_at) * 1000;
+                text("securityCheckedAt", checkedAt ? `Last checked ${new Date(checkedAt).toLocaleString()}` : "Security check completed");
+
+                const recommendationBox = $("securityRecommendations");
+                if (recommendationBox) {
+                    const icons = { critical: "shield-alert", warning: "triangle-alert", success: "circle-check", info: "info" };
+                    recommendationBox.innerHTML = recommendations.map(item => {
+                        const severity = ["critical", "warning", "success"].includes(item.severity) ? item.severity : "info";
+                        return `<article class="security-recommendation ${severity}">
+                            <div class="security-recommendation-icon"><i data-lucide="${icons[severity]}"></i></div>
+                            <div><strong>${escapeHtml(item.title || "Security recommendation")}</strong><p>${escapeHtml(item.message || "")}</p></div>
+                        </article>`;
+                    }).join("") || '<div class="security-loading">No recommendations were returned.</div>';
+                }
+
+                text("securityPortsSummary", `${ports.length} listener(s) · ${number(data.exposed_ports)} publicly bound`);
+                const portsBody = $("securityPortsBody");
+                if (portsBody) {
+                    portsBody.innerHTML = ports.slice(0, 30).map(item => `<tr>
+                        <td><strong>${number(item.port)}</strong></td>
+                        <td>${escapeHtml(item.process || "System")}</td>
+                        <td>${escapeHtml(item.address || "—")}</td>
+                        <td><span class="exposure-badge ${item.exposed ? "public" : "local"}">${item.exposed ? "PUBLIC" : "LOCAL"}</span></td>
+                    </tr>`).join("") || '<tr><td colspan="4"><div class="security-loading">No listening ports were detected.</div></td></tr>';
+                }
+                refreshIcons();
+            }
+
+            async function loadSecurity({ silent = false } = {}) {
+                try {
+                    state.security = await fetchJson(API.security);
+                    renderSecurity();
+                } catch (error) {
+                    console.error("Security API error:", error);
+                    text("securityGrade", "Security check unavailable");
+                    text("securitySummary", "The server did not return a security report. Confirm that the updated backend is running.");
+                    if (!silent) toast("Security check failed", error.message || "Could not load the security report.", "error");
+                }
+            }
+
+            function openSshPortModal() {
+                const currentPort = number(first(state.security?.ssh, ["port"], 22), 22);
+                const input = $("newSshPort");
+                if (input) input.value = String(currentPort === 22 ? 2222 : "");
+                if ($("sshAdminPassword")) $("sshAdminPassword").value = "";
+                $("sshPortModal")?.classList.add("show");
+                document.body.style.overflow = "hidden";
+                setTimeout(() => input?.focus(), 100);
+            }
+
+            function closeSshPortModal() {
+                $("sshPortModal")?.classList.remove("show");
+                document.body.style.overflow = "";
+                if ($("sshAdminPassword")) $("sshAdminPassword").value = "";
+            }
+
+            async function submitSshPortChange(event) {
+                event.preventDefault();
+                const port = Number($("newSshPort")?.value);
+                const password = $("sshAdminPassword")?.value || "";
+                const button = $("submitSshPort");
+                if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+                    toast("Invalid SSH port", "Choose a port between 1024 and 65535.", "error");
+                    return;
+                }
+                if (!password) {
+                    toast("Password required", "Confirm this protected action with your administrator password.", "error");
+                    return;
+                }
+
+                const originalMarkup = button?.innerHTML;
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<i data-lucide="loader-circle"></i> Applying safely...';
+                    refreshIcons();
+                }
+                try {
+                    const response = await fetch(API.securitySshPort, {
+                        method: "POST",
+                        cache: "no-store",
+                        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                        body: JSON.stringify({ port, password })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.message || `${response.status} ${response.statusText}`);
+                    closeSshPortModal();
+                    toast("SSH port changed", `${data.message} ${data.firewall_message || ""} ${data.recovery_note || ""}`, "success");
+                    await loadSecurity({ silent: true });
+                } catch (error) {
+                    toast("SSH port change failed", error.message || "The previous configuration was preserved.", "error");
+                } finally {
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = originalMarkup;
+                        refreshIcons();
+                    }
+                }
+            }
+
+            function normalizeNotificationType(value) {
+                const type = String(value || "info").trim().toLowerCase();
+                if (["danger", "error", "urgent"].includes(type)) return "critical";
+                if (["warn", "maintenance"].includes(type)) return "warning";
+                if (["update", "resolved"].includes(type)) return "success";
+                return ["info", "success", "warning", "critical"].includes(type) ? type : "info";
+            }
+
+            function normalizeNotifications(payload) {
+                const source = Array.isArray(payload)
+                    ? payload
+                    : first(payload, ["notifications", "items", "messages", "data"], []);
+
+                if (!Array.isArray(source)) return [];
+
+                return source
+                    .filter(item => item !== null && item !== undefined)
+                    .map((item, index) => {
+                        const entry = typeof item === "string" ? { message: item } : item;
+                        return {
+                            id: first(entry, ["id", "slug"], `notification-${index}`),
+                            title: first(entry, ["title", "headline", "name"], "Apira VPS notification"),
+                            message: first(entry, ["message", "body", "description", "content"], ""),
+                            type: normalizeNotificationType(first(entry, ["type", "level", "severity", "status"], "info")),
+                            date: first(entry, ["date", "published_at", "created_at", "timestamp"], ""),
+                            link: first(entry, ["link", "url", "href"], ""),
+                            linkLabel: first(entry, ["link_label", "action_label", "button_text"], "Learn more"),
+                            pinned: Boolean(first(entry, ["pinned", "important"], false)),
+                            enabled: first(entry, ["enabled", "active"], true) !== false
+                        };
+                    })
+                    .filter(item => item.enabled && (item.title || item.message))
+                    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
+            }
+
+            function formatNotificationDate(value) {
+                if (!value) return "Recently published";
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return String(value);
+                return new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" }).format(date);
+            }
+
+            function safeNotificationUrl(value) {
+                if (!value) return "";
+                try {
+                    const url = new URL(value);
+                    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+                } catch {
+                    return "";
+                }
+            }
+
+            function renderNotifications(error = null) {
+                const grid = $("notificationsGrid");
+                if (!grid) return;
+
+                const count = state.notifications.length;
+                const badge = $("notificationCount");
+                const dot = $("notificationDot");
+                if (badge) { badge.textContent = String(count); badge.hidden = count === 0; }
+                if (dot) dot.hidden = count === 0;
+
+                if (error) {
+                    grid.innerHTML = `<div class="notification-empty"><i data-lucide="cloud-off"></i><strong>Could not load notifications</strong><span>${escapeHtml(error)}</span></div>`;
+                    refreshIcons();
+                    return;
+                }
+
+                if (!count) {
+                    grid.innerHTML = '<div class="notification-empty"><i data-lucide="bell-off"></i><strong>You are all caught up</strong><span>There are no announcements to display right now.</span></div>';
+                    refreshIcons();
+                    return;
+                }
+
+                const icons = { info: "info", success: "circle-check", warning: "triangle-alert", critical: "shield-alert" };
+                grid.innerHTML = state.notifications.map(item => {
+                    const link = safeNotificationUrl(item.link);
+                    return `<article class="notification-card ${item.type}">
+                        <div class="notification-card-icon"><i data-lucide="${icons[item.type]}"></i></div>
+                        <div class="notification-card-body">
+                            <h2>${escapeHtml(item.title)}</h2>
+                            <p>${escapeHtml(item.message)}</p>
+                            <div class="notification-card-meta">
+                                <span class="notification-type">${escapeHtml(item.type)}</span>
+                                <span>${escapeHtml(formatNotificationDate(item.date))}</span>
+                                ${item.pinned ? '<span>â€¢ Pinned</span>' : ''}
+                            </div>
+                        </div>
+                        ${link ? `<a class="small-btn notification-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.linkLabel)}<i data-lucide="external-link"></i></a>` : ""}
+                    </article>`;
+                }).join("");
+                refreshIcons();
+            }
+
+            async function loadNotifications({ silent = false } = {}) {
+                try {
+                    const response = await fetch(NOTIFICATIONS_URL, { cache: "no-store", headers: { "Accept": "application/json" } });
+                    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+                    const raw = (await response.text()).trim();
+                    const payload = raw ? JSON.parse(raw) : [];
+                    state.notifications = normalizeNotifications(payload);
+                    renderNotifications();
+                } catch (error) {
+                    state.notifications = [];
+                    renderNotifications("The official GitHub feed is temporarily unavailable.");
+                    if (!silent) toast("Notifications unavailable", error.message || "Could not load the GitHub feed.", "error");
+                }
+            }
+
+            async function refreshAll(showToast = false) {
+                await Promise.allSettled([loadSystem({ silent: true }), loadResources({ silent: true }), loadProcesses({ silent: true }), loadServices({ silent: true }), loadTools({ silent: true }), loadActivity({ silent: true }), loadHealth({ silent: true }), loadSecurity({ silent: true }), loadNotifications({ silent: true })]);
+                if (showToast) toast("Dashboard refreshed", "Live server information is up to date.");
+            }
+
+            function bindEvents() {
+                $$(".nav-item[data-page]").forEach(item => item.addEventListener("click", () => navigateTo(item.dataset.page)));
+                $$("[data-go-page]").forEach(button => button.addEventListener("click", () => navigateTo(button.dataset.goPage)));
+                $("menuButton")?.addEventListener("click", () => { $("sidebar")?.classList.add("open"); $("mobileOverlay")?.classList.add("show"); });
+                $("mobileOverlay")?.addEventListener("click", () => { $("sidebar")?.classList.remove("open"); $("mobileOverlay")?.classList.remove("show"); });
+                $("closeModal")?.addEventListener("click", closeConfirmation); $("cancelModal")?.addEventListener("click", closeConfirmation);
+                $("confirmModal")?.addEventListener("click", event => { if (event.target === $("confirmModal")) closeConfirmation(); });
+                $("confirmAction")?.addEventListener("click", async () => { const action = state.pendingAction; closeConfirmation(); if (typeof action === "function") await action(); });
+                document.addEventListener("keydown", event => { if (event.key === "Escape") { closeConfirmation(); closeSshPortModal(); } });
+                $("refreshButton")?.addEventListener("click", () => refreshAll(true));
+                $("notificationButton")?.addEventListener("click", () => navigateTo("notifications"));
+                $("refreshNotifications")?.addEventListener("click", async () => { await loadNotifications(); toast("Notifications refreshed", "The official announcement feed is up to date."); });
+                $("refreshSecurity")?.addEventListener("click", async () => { await loadSecurity(); toast("Security check completed", "The latest read-only server report is displayed."); });
+                $("changeSshPortButton")?.addEventListener("click", openSshPortModal);
+                $("closeSshPortModal")?.addEventListener("click", closeSshPortModal);
+                $("cancelSshPort")?.addEventListener("click", closeSshPortModal);
+                $("sshPortModal")?.addEventListener("click", event => { if (event.target === $("sshPortModal")) closeSshPortModal(); });
+                $("sshPortForm")?.addEventListener("submit", submitSshPortChange);
+                $("checkAllUpdates")?.addEventListener("click", async () => { await loadTools(); toast("Extensions", "Extension versions checked.", "success"); });
+                $("refreshProcesses")?.addEventListener("click", () => loadProcesses().then(() => toast("Processes refreshed", "Latest process information is displayed.")));
+                $("healthCheckButton")?.addEventListener("click", () => loadHealth().then(() => toast("Health check completed", "Health information was loaded from the API.")));
+                $("restartControlButton")?.addEventListener("click", () => openConfirmation("Restart Apira VPS Control", "The control panel and terminal will be unavailable briefly. Continue?", async () => {
+                    try { await fetchJson("/api/system/restart-control", { method: "POST" }); toast("Restart requested", "Apira VPS Control is restarting.", "warning"); }
+                    catch (error) { toast("Restart unavailable", error.message || "Apira VPS Control could not be restarted.", "error"); }
+                }));
+                $("globalSearch")?.addEventListener("input", event => { const q = event.target.value.trim().toLowerCase(); if (!q) return; if (/firewall|ssh|port|login|security/.test(q)) navigateTo("security"); else if (/service|nginx|mysql|docker/.test(q)) navigateTo("services"); else if (/cpu|memory|ram|network|disk/.test(q)) navigateTo("resources"); else if (/system|kernel|ubuntu|ip/.test(q)) navigateTo("system"); else if (/tool|file manager/.test(q)) navigateTo("tools"); });
+                window.addEventListener("resize", () => { drawChart(); drawTrafficChart(); });
+            }
+
+            async function initialize() {
+                updateTimeGreeting();
+                window.setInterval(updateTimeGreeting, 60_000);
+                bindEvents(); refreshIcons();
+                await refreshAll();
+                setInterval(() => loadResources({ silent: true }), 3000);
+                setInterval(() => loadProcesses({ silent: true }), 5000);
+                setInterval(() => loadServices({ silent: true }), 10000);
+                setInterval(() => loadSystem({ silent: true }), 60000);
+                setInterval(() => loadHealth({ silent: true }), 30000);
+                setInterval(() => loadActivity({ silent: true }), 30000);
+                setInterval(() => loadTools({ silent: true }), 60000);
+                setInterval(() => loadSecurity({ silent: true }), 60000);
+                setInterval(() => loadNotifications({ silent: true }), 300000);
+                setTimeout(() => { drawChart(); drawTrafficChart(); }, 100);
+            }
+
+            if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true });
+            else initialize();
+        })();
+    </script>
+</body>
+
+</html>

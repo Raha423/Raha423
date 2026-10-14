@@ -1,0 +1,1 @@
+# One extension directory name per line.

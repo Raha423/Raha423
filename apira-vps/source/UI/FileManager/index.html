@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>File Manager · Apira VPS</title>
+    <style>
+        :root {
+            --bg:#070912; --panel:#0e1220; --panel2:#12182a; --line:#242c43;
+            --text:#edf1ff; --muted:#8993ab; --primary:#8b5cf6; --cyan:#22d3ee;
+            --green:#34d399; --red:#fb7185; --amber:#fbbf24; --radius:15px;
+        }
+        * { box-sizing:border-box }
+        html,body { margin:0; min-height:100%; background:var(--bg); color:var(--text); font:14px Inter,Segoe UI,system-ui,sans-serif }
+        button,input,textarea,select { font:inherit }
+        button { color:inherit }
+        .app { min-height:100vh; display:grid; grid-template-columns:245px minmax(0,1fr) }
+        .sidebar { padding:22px 14px; border-right:1px solid var(--line); background:#0a0d18; position:sticky; top:0; height:100vh }
+        .mobile-menu { display:none }
+        .sidebar-overlay { display:none; position:fixed; inset:0; z-index:19; background:#02040bbb; backdrop-filter:blur(3px) }
+        .brand { display:flex; align-items:center; gap:11px; padding:0 9px 22px; font-weight:800; font-size:17px }
+        .brand-mark { width:36px; height:36px; display:grid; place-items:center; border-radius:11px; background:linear-gradient(135deg,var(--primary),var(--cyan)); box-shadow:0 0 28px #8b5cf644 }
+        .section-label { margin:12px 10px 7px; color:#68728a; font-size:11px; text-transform:uppercase; letter-spacing:.13em }
+        .place { width:100%; border:0; background:transparent; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; color:#aab3c8; text-align:left }
+        .place:hover,.place.active { color:#fff; background:#171c2d }
+        .place-icon { width:23px; text-align:center }
+        .storage { margin:24px 8px 0; padding:14px; border:1px solid var(--line); border-radius:13px; background:#101526 }
+        .storage-row { display:flex; justify-content:space-between; gap:10px; font-size:12px }
+        .bar { height:6px; background:#242b40; border-radius:8px; margin:11px 0 7px; overflow:hidden }
+        .bar span { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--primary),var(--cyan)); border-radius:inherit }
+        .about-card { margin:12px 8px 0; padding:13px; border:1px solid var(--line); border-radius:13px; background:#0d1220; color:var(--muted); font-size:11px; line-height:1.55 }
+        .about-card strong { display:block; color:#dce4f6; font-size:12px }
+        .about-card button { margin-top:9px; width:100% }
+        .main { min-width:0; display:flex; flex-direction:column }
+        .topbar { min-height:70px; padding:14px 22px; display:flex; gap:12px; align-items:center; border-bottom:1px solid var(--line); background:#090c16ee; position:sticky; top:0; z-index:5; backdrop-filter:blur(16px) }
+        .nav { display:flex; gap:5px }
+        .icon-btn,.action-btn { border:1px solid var(--line); background:#111625; border-radius:10px; min-height:38px; cursor:pointer }
+        .icon-btn { width:38px }
+        .icon-btn:hover,.action-btn:hover { border-color:#4d5875; background:#171d30 }
+        .icon-btn:disabled { opacity:.35; cursor:not-allowed }
+        .pathbox { min-width:180px; flex:1; height:40px; border:1px solid var(--line); background:#0c101c; border-radius:10px; display:flex; align-items:center; gap:6px; padding:0 12px; overflow:auto; white-space:nowrap }
+        .crumb { border:0; background:none; padding:5px; color:#aeb8ce; cursor:pointer }
+        .crumb:hover { color:#fff }
+        .search { width:min(260px,28vw); position:relative }
+        .search input { width:100%; height:40px; padding:0 12px 0 36px; border:1px solid var(--line); background:#0c101c; color:#fff; border-radius:10px; outline:none }
+        .search span { position:absolute; left:12px; top:10px; color:var(--muted) }
+        .toolbar { padding:12px 22px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--line); flex-wrap:wrap }
+        .action-btn { padding:0 13px; display:inline-flex; align-items:center; gap:7px }
+        .action-btn.primary { background:linear-gradient(135deg,#7c3aed,#5b21b6); border-color:#8b5cf6 }
+        .action-btn.danger { color:#fecdd3 }
+        .toolbar .spacer { flex:1 }
+        .content { padding:0 22px 22px; min-width:0 }
+        .dropzone { display:none; margin:18px 0 0; padding:32px; border:2px dashed var(--cyan); border-radius:16px; color:#b8f4ff; text-align:center; background:#0d253044 }
+        .dropzone.show { display:block }
+        .table-wrap { margin-top:15px; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--panel) }
+        table { border-collapse:collapse; width:100%; table-layout:fixed }
+        th { height:43px; color:#77829a; font-size:11px; text-transform:uppercase; letter-spacing:.08em; background:#0c101c; text-align:left; padding:0 13px; border-bottom:1px solid var(--line) }
+        td { height:54px; padding:0 13px; border-bottom:1px solid #1b2235; color:#b5bfd4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+        tr:last-child td { border-bottom:0 }
+        tbody tr { cursor:default }
+        tbody tr:hover { background:#141a2a }
+        tbody tr.selected { background:#221a3d; box-shadow:inset 3px 0 var(--primary) }
+        .checkcol { width:42px }.namecol { width:auto }.sizecol { width:110px }.datecol { width:175px }.permcol { width:105px }.morecol { width:55px }
+        .file-name { display:flex; align-items:center; gap:11px; color:#e5e9f6; min-width:0 }
+        .file-icon { width:31px; height:31px; display:grid; place-items:center; border-radius:9px; background:#1a2135; font-size:16px; flex:none }
+        .folder .file-icon { color:var(--amber); background:#2c2617 }
+        .empty { padding:70px 20px; text-align:center; color:var(--muted) }
+        .empty strong { display:block; color:#dbe2f3; font-size:17px; margin-bottom:8px }
+        .statusbar { min-height:34px; padding:8px 24px; color:#747f97; font-size:12px; display:flex; justify-content:space-between; gap:20px }
+        .toast-stack { position:fixed; right:18px; bottom:18px; z-index:30; display:grid; gap:9px }
+        .toast { width:min(360px,calc(100vw - 36px)); padding:13px 15px; background:#151b2c; border:1px solid #313a55; border-radius:12px; box-shadow:0 16px 50px #0008 }
+        .toast.error { border-color:#7f1d35 }.toast.success { border-color:#16654d }
+        .modal-backdrop { position:fixed; inset:0; z-index:20; background:#03050bcf; display:none; place-items:center; padding:18px }
+        .modal-backdrop.open { display:grid }
+        .modal { width:min(560px,100%); max-height:90vh; overflow:auto; background:#101522; border:1px solid #303954; border-radius:17px; box-shadow:0 30px 90px #000c }
+        .modal.wide { width:min(920px,100%) }
+        .modal-head,.modal-foot { padding:16px 18px; display:flex; align-items:center; gap:12px }
+        .modal-head { border-bottom:1px solid var(--line) }.modal-head h2 { margin:0; font-size:16px; flex:1 }
+        .modal-body { padding:18px }
+        .modal-foot { border-top:1px solid var(--line); justify-content:flex-end }
+        .field { display:grid; gap:7px; margin-bottom:14px }.field label { color:#99a4bb; font-size:12px }
+        .field input,.field textarea,.field select { width:100%; border:1px solid #303953; background:#0a0e18; color:#f4f6ff; border-radius:10px; padding:11px; outline:none }
+        .field textarea { min-height:54vh; resize:vertical; font:13px ui-monospace,SFMono-Regular,Consolas,monospace; line-height:1.55; tab-size:4 }
+        .details { display:grid; grid-template-columns:140px 1fr; gap:11px; word-break:break-all }.details span:nth-child(odd) { color:#7f8aa1 }
+        .about-hero { text-align:center; padding:10px 6px 20px }
+        .about-logo { width:62px; height:62px; margin:0 auto 13px; display:grid; place-items:center; border-radius:18px; font-size:25px; font-weight:900; background:linear-gradient(135deg,var(--primary),var(--cyan)); box-shadow:0 12px 45px #8b5cf655 }
+        .about-hero h3 { margin:0; font-size:21px }.about-hero p { color:var(--muted); line-height:1.65; max-width:430px; margin:9px auto 0 }
+        .about-badges { display:flex; justify-content:center; gap:7px; flex-wrap:wrap; margin-top:14px }
+        .about-badges span { padding:6px 9px; border:1px solid var(--line); background:#0a0e18; border-radius:999px; color:#aeb9cf; font-size:11px }
+        .progress-overlay { position:fixed; inset:0; z-index:40; background:#050711c9; display:none; place-items:center }
+        .progress-overlay.show { display:grid }.spinner { width:42px; height:42px; border:4px solid #28304a; border-top-color:var(--cyan); border-radius:50%; animation:spin .8s linear infinite }
+        @keyframes spin { to { transform:rotate(360deg) } }
+        @media(max-width:850px) {
+            .app { grid-template-columns:1fr }
+            .sidebar { display:block; position:fixed; z-index:20; left:0; top:0; width:min(290px,84vw); height:100dvh; transform:translateX(-105%); transition:transform .22s ease; box-shadow:20px 0 70px #000b; overflow-y:auto }
+            .sidebar.open { transform:translateX(0) }
+            .sidebar-overlay.open { display:block }
+            .mobile-menu { display:grid; place-items:center; flex:none }
+            .topbar { padding:10px; flex-wrap:wrap }.pathbox { order:3; flex-basis:100% }.search { flex:1; width:auto }
+            .toolbar,.content { padding-left:10px; padding-right:10px }.datecol,.permcol { display:none }.sizecol { width:90px }.statusbar { padding:8px 12px }
+        }
+        @media(max-width:600px) {
+            .toolbar { gap:7px; position:sticky; top:119px; z-index:4; background:#090c16f5; overflow-x:auto; flex-wrap:nowrap; scrollbar-width:none }
+            .toolbar::-webkit-scrollbar { display:none }
+            .action-btn span { display:none }.action-btn { min-width:43px; width:43px; min-height:43px; justify-content:center; padding:0; flex:none }
+            .table-wrap { border:0; background:transparent; overflow:visible }
+            table,tbody { display:block } thead { display:none }
+            tbody { display:grid; gap:9px }
+            tbody tr { display:grid; grid-template-columns:34px minmax(0,1fr) auto; align-items:center; min-height:68px; border:1px solid var(--line); border-radius:13px; background:var(--panel); overflow:hidden }
+            tbody tr.selected { box-shadow:inset 3px 0 var(--primary); border-color:#55447a }
+            td { height:auto; border:0; padding:11px 7px }
+            td:nth-child(1) { grid-column:1 } td:nth-child(2) { grid-column:2 } td:nth-child(3) { grid-column:3; text-align:right; padding-right:12px }
+            .datecol,.permcol,.morecol { display:none }
+            .file-icon { width:38px; height:38px; font-size:19px }
+            .file-name { gap:9px }.file-name span:last-child { overflow:hidden; text-overflow:ellipsis }
+            .modal-backdrop { padding:8px; align-items:end }.modal { border-radius:18px 18px 10px 10px; max-height:92vh }
+            .modal-body { padding:15px }.modal-head,.modal-foot { padding:14px }
+            .modal-foot .action-btn { width:auto; min-width:90px; padding:0 14px }
+            .field textarea { min-height:60vh }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">F</span><span>File Manager</span></div>
+        <div class="section-label">Places</div>
+        <div id="places"></div>
+        <div class="storage">
+            <div class="storage-row"><strong>Storage</strong><span id="diskPercent">—</span></div>
+            <div class="bar"><span id="diskBar"></span></div>
+            <div class="storage-row"><span id="diskUsed">— used</span><span id="diskFree">— free</span></div>
+        </div>
+        <div class="about-card">
+            <strong>Apira VPS File Manager</strong>
+            Built by Apira VPS · Version 1.0.0
+            <button class="action-btn" id="sidebarInfoBtn">About this extension</button>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <main class="main">
+        <header class="topbar">
+            <button class="icon-btn mobile-menu" id="mobileMenuBtn" title="Open menu" aria-label="Open navigation menu">☰</button>
+            <div class="nav">
+                <button class="icon-btn" id="backBtn" title="Back">←</button>
+                <button class="icon-btn" id="forwardBtn" title="Forward">→</button>
+                <button class="icon-btn" id="upBtn" title="Up">↑</button>
+                <button class="icon-btn" id="refreshBtn" title="Refresh">↻</button>
+            </div>
+            <div class="pathbox" id="breadcrumbs"></div>
+            <div class="search"><span>⌕</span><input id="searchInput" placeholder="Search this folder"></div>
+        </header>
+        <div class="toolbar">
+            <button class="action-btn primary" id="uploadBtn">⇧ <span>Upload</span></button>
+            <button class="action-btn" id="newFolderBtn">＋ <span>Folder</span></button>
+            <button class="action-btn" id="newFileBtn">◇ <span>File</span></button>
+            <button class="action-btn" id="editBtn" disabled>✎ <span>Edit</span></button>
+            <button class="action-btn" id="renameBtn" disabled>✣ <span>Rename</span></button>
+            <button class="action-btn" id="downloadBtn" disabled>⇩ <span>Download</span></button>
+            <button class="action-btn" id="copyBtn" disabled>⧉ <span>Copy</span></button>
+            <button class="action-btn" id="moveBtn" disabled>↪ <span>Move</span></button>
+            <button class="action-btn" id="archiveBtn" disabled>▣ <span>Archive</span></button>
+            <button class="action-btn" id="extractBtn" disabled>▱ <span>Extract</span></button>
+            <button class="action-btn danger" id="deleteBtn" disabled>⌫ <span>Trash</span></button>
+            <span class="spacer"></span>
+            <button class="action-btn" id="infoBtn">ⓘ <span>Info</span></button>
+            <button class="action-btn" id="propertiesBtn" disabled>ⓘ <span>Properties</span></button>
+        </div>
+        <section class="content" id="content">
+            <div class="dropzone" id="dropzone"><strong>Drop files to upload</strong><br>Files will be uploaded to the current directory.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th class="checkcol"><input type="checkbox" id="selectAll"></th><th class="namecol">Name</th><th class="sizecol">Size</th><th class="datecol">Modified</th><th class="permcol">Permissions</th><th class="morecol"></th></tr></thead>
+                    <tbody id="fileTable"></tbody>
+                </table>
+                <div class="empty" id="emptyState" hidden><strong>This folder is empty</strong>Upload a file or create a new folder.</div>
+            </div>
+        </section>
+        <footer class="statusbar"><span id="itemCount">0 items</span><span id="currentHost">Connecting…</span></footer>
+    </main>
+</div>
+<input type="file" id="fileInput" multiple hidden>
+<div class="toast-stack" id="toasts"></div>
+<div class="progress-overlay" id="busy"><div><div class="spinner"></div></div></div>
+<div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modal"><div class="modal-head"><h2 id="modalTitle"></h2><button class="icon-btn" id="modalClose">×</button></div><div class="modal-body" id="modalBody"></div><div class="modal-foot" id="modalFoot"></div></div></div>
+<script>
+(() => {
+    "use strict";
+    const $ = id => document.getElementById(id);
+    const state = { path:"/", parent:"/", items:[], selected:new Set(), history:[], historyIndex:-1, session:null, searching:false };
+    const esc = value => String(value ?? "").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+    const api = async (url, options={}) => {
+        const headers = {...(options.headers||{})};
+        if (options.method && options.method !== "GET") headers["X-Requested-With"]="XMLHttpRequest";
+        const response = await fetch(url,{...options,headers,credentials:"same-origin",cache:"no-store"});
+        if (response.status===401) { location.href="/login"; throw new Error("Authentication required"); }
+        const data = await response.json().catch(()=>({success:false,message:`HTTP ${response.status}`}));
+        if (!response.ok || data.success===false) throw new Error(data.message||data.error||"Request failed");
+        return data;
+    };
+    const post = (url,payload) => api(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const formatBytes = value => {
+        let n=Number(value)||0;if(n===0)return"0 B";const u=["B","KB","MB","GB","TB","PB"];const i=Math.min(Math.floor(Math.log(Math.abs(n))/Math.log(1024)),u.length-1);return`${(n/1024**i).toFixed(i>1?1:0)} ${u[i]}`;
+    };
+    const formatDate = value => { try{return new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"}).format(new Date(value))}catch{return value} };
+    const toast = (message,type="") => { const node=document.createElement("div");node.className=`toast ${type}`;node.textContent=message;$("toasts").append(node);setTimeout(()=>node.remove(),4200) };
+    const busy = show => $("busy").classList.toggle("show",show);
+    const openMobileMenu = () => { document.querySelector(".sidebar").classList.add("open");$("sidebarOverlay").classList.add("open");document.body.style.overflow="hidden" };
+    const closeMobileMenu = () => { document.querySelector(".sidebar").classList.remove("open");$("sidebarOverlay").classList.remove("open");document.body.style.overflow="" };
+    const icon = item => item.type==="directory"?"📁":item.type==="symlink"?"↗":item.mime?.startsWith("image/")?"🖼":item.mime?.startsWith("text/")?"▤":item.name.endsWith(".zip")?"▣":"◇";
+    function modal(title,body,buttons=[],wide=false) {
+        $("modalTitle").textContent=title;$("modalBody").innerHTML=body;$("modalFoot").innerHTML="";$("modal").classList.toggle("wide",wide);
+        for(const spec of buttons){const b=document.createElement("button");b.className=`action-btn ${spec.primary?"primary":""} ${spec.danger?"danger":""}`;b.textContent=spec.label;b.onclick=spec.action;$("modalFoot").append(b)}
+        $("modalBackdrop").classList.add("open");
+    }
+    const closeModal=()=>$("modalBackdrop").classList.remove("open");
+    $("modalClose").onclick=closeModal;$("modalBackdrop").addEventListener("click",e=>{if(e.target===$("modalBackdrop"))closeModal()});
+    function renderBreadcrumbs() {
+        const box=$("breadcrumbs");box.innerHTML="";const parts=state.path.split("/").filter(Boolean);let path="";
+        const root=document.createElement("button");root.className="crumb";root.textContent="/";root.onclick=()=>navigate("/");box.append(root);
+        for(const part of parts){path+="/"+part;const sep=document.createTextNode("›");box.append(sep);const b=document.createElement("button");b.className="crumb";b.textContent=part;const target=path;b.onclick=()=>navigate(target);box.append(b)}
+    }
+    function updateActions() {
+        const selected=[...state.selected];const one=selected.length===1;const item=one?state.items.find(x=>x.path===selected[0]):null;
+        $("editBtn").disabled=!(one&&item?.type==="file");$("downloadBtn").disabled=!(one&&item?.type==="file");
+        for(const id of["renameBtn","copyBtn","moveBtn","deleteBtn","propertiesBtn"])$(id).disabled=!one;
+        $("extractBtn").disabled=!(one&&item?.type==="file"&&item.name.toLowerCase().endsWith(".zip"));
+        $("archiveBtn").disabled=selected.length===0;$("selectAll").checked=state.items.length>0&&selected.length===state.items.length;
+    }
+    function render() {
+        renderBreadcrumbs();const body=$("fileTable");body.innerHTML="";
+        for(const item of state.items){const tr=document.createElement("tr");tr.className=`${item.type==="directory"?"folder":""} ${state.selected.has(item.path)?"selected":""}`;
+            tr.innerHTML=`<td><input class="row-check" type="checkbox" ${state.selected.has(item.path)?"checked":""}></td><td><div class="file-name"><span class="file-icon">${icon(item)}</span><span>${esc(item.name)}</span></div></td><td>${item.type==="directory"?"—":formatBytes(item.size)}</td><td class="datecol">${esc(formatDate(item.modified))}</td><td class="permcol">${esc(item.mode_octal)}</td><td class="morecol"><button class="icon-btn row-more">⋯</button></td>`;
+            tr.addEventListener("click",e=>{if(e.target.closest(".row-more"))return; if(e.target.closest(".row-check")){toggle(item.path);return} state.selected.clear();state.selected.add(item.path);render()});
+            tr.addEventListener("dblclick",()=>item.type==="directory"?navigate(item.path):openEditor(item));
+            tr.querySelector(".row-more").onclick=()=>showProperties(item);body.append(tr)}
+        $("emptyState").hidden=state.items.length>0;$("itemCount").textContent=`${state.items.length} items · ${state.selected.size} selected`;updateActions();
+    }
+    const toggle=path=>{state.selected.has(path)?state.selected.delete(path):state.selected.add(path);render()};
+    async function navigate(path,{history=true}={}) {
+        busy(true);try{const data=await api(`api/list?path=${encodeURIComponent(path)}&hidden=1`);state.path=data.path;state.parent=data.parent;state.items=data.items;state.selected.clear();state.searching=false;
+            if(history){state.history=state.history.slice(0,state.historyIndex+1);state.history.push(state.path);state.historyIndex=state.history.length-1}
+            const p=data.disk.total?Math.round(data.disk.used/data.disk.total*100):0;$("diskPercent").textContent=`${p}%`;$("diskBar").style.width=`${p}%`;$("diskUsed").textContent=`${formatBytes(data.disk.used)} used`;$("diskFree").textContent=`${formatBytes(data.disk.free)} free`;
+            $("backBtn").disabled=state.historyIndex<=0;$("forwardBtn").disabled=state.historyIndex>=state.history.length-1;render();
+        }catch(e){toast(e.message,"error")}finally{busy(false)}
+    }
+    async function init(){try{state.session=await api("api/session");$("currentHost").textContent=`${state.session.username}@${state.session.hostname}`;const places=$("places");for(const p of state.session.places){const b=document.createElement("button");b.className="place";b.innerHTML=`<span class="place-icon">${p.icon==="home"?"⌂":p.icon==="globe"?"◎":p.icon==="scroll"?"▤":"◫"}</span>${esc(p.name)}`;b.onclick=()=>{closeMobileMenu();navigate(p.path)};places.append(b)}await navigate(state.session.home)}catch(e){toast(e.message,"error")}}
+    function promptCreate(type){modal(`New ${type}`,`<div class="field"><label>Name</label><input id="createName" autocomplete="off"></div>`,[{label:"Cancel",action:closeModal},{label:"Create",primary:true,action:async()=>{try{await post("api/create",{path:state.path,type,name:$("createName").value});closeModal();await navigate(state.path,{history:false});toast(`${type} created`,"success")}catch(e){toast(e.message,"error")}}}]);setTimeout(()=>$("createName").focus(),0)}
+    async function uploadFiles(files){if(!files.length)return;const form=new FormData();form.append("path",state.path);for(const file of files)form.append("files",file);busy(true);try{await api("api/upload",{method:"POST",headers:{"X-Requested-With":"XMLHttpRequest"},body:form});toast(`${files.length} file(s) uploaded`,"success");await navigate(state.path,{history:false})}catch(e){toast(e.message,"error")}finally{busy(false)}}
+    async function openEditor(item){if(item.type!=="file")return;busy(true);try{const data=await api(`api/read?path=${encodeURIComponent(item.path)}`);modal(`Edit · ${item.name}`,`<div class="field"><textarea id="editor" spellcheck="false"></textarea></div>`,[{label:"Cancel",action:closeModal},{label:"Save",primary:true,action:async()=>{busy(true);try{await post("api/write",{path:item.path,content:$("editor").value});closeModal();toast("File saved","success");await navigate(state.path,{history:false})}catch(e){toast(e.message,"error")}finally{busy(false)}}}],true);$("editor").value=data.content}catch(e){toast(e.message,"error")}finally{busy(false)}}
+    function selectedItem(){return state.items.find(item=>state.selected.has(item.path))}
+    function showProperties(item=selectedItem()){if(!item)return;modal("Properties",`<div class="details"><span>Name</span><strong>${esc(item.name)}</strong><span>Path</span><strong>${esc(item.path)}</strong><span>Type</span><strong>${esc(item.type)}</strong><span>Size</span><strong>${item.type==="directory"?"—":formatBytes(item.size)}</strong><span>Modified</span><strong>${esc(formatDate(item.modified))}</strong><span>Owner</span><strong>${item.uid}:${item.gid}</strong><span>Permissions</span><strong>${esc(item.mode)} (${esc(item.mode_octal)})</strong></div><div class="field" style="margin-top:18px"><label>Change permissions (octal)</label><input id="chmodValue" value="${esc(item.mode_octal)}"></div>`,[{label:"Close",action:closeModal},{label:"Apply",primary:true,action:async()=>{try{await post("api/chmod",{path:item.path,mode:$("chmodValue").value});closeModal();await navigate(state.path,{history:false});toast("Permissions updated","success")}catch(e){toast(e.message,"error")}}}])}
+    function showAbout(){modal("About File Manager",`<div class="about-hero"><div class="about-logo">W</div><h3>Apira VPS File Manager</h3><p>A secure, local server file-management extension designed and developed by <strong>Apira VPS</strong>. It provides an SFTP-class workflow through the authenticated Apira VPS API without exposing a separate network service.</p><div class="about-badges"><span>Version 1.0.0</span><span>Built by Apira VPS</span><span>Local API</span><span>Mobile ready</span></div></div><div class="details"><span>Authentication</span><strong>Shared Apira VPS session</strong><span>Connection</span><strong>Same-origin local API</strong><span>Default deletion</span><strong>Move to Trash</strong><span>Managed root</span><strong>${esc(state.session?.root||"/")}</strong></div>`,[{label:"Close",primary:true,action:closeModal}])}
+    function destinationDialog(action){const item=selectedItem();if(!item)return;modal(`${action==="copy"?"Copy":"Move"} ${item.name}`,`<div class="field"><label>Destination directory</label><input id="destinationPath" value="${esc(state.path)}"></div>`,[{label:"Cancel",action:closeModal},{label:action==="copy"?"Copy":"Move",primary:true,action:async()=>{busy(true);try{await post("api/transfer",{source:item.path,destination:$("destinationPath").value,action});closeModal();await navigate(state.path,{history:false});toast("Operation completed","success")}catch(e){toast(e.message,"error")}finally{busy(false)}}}])}
+    function renameSelected(){const item=selectedItem();if(!item)return;modal(`Rename ${item.name}`,`<div class="field"><label>New name</label><input id="renameValue" value="${esc(item.name)}"></div>`,[{label:"Cancel",action:closeModal},{label:"Rename",primary:true,action:async()=>{try{await post("api/rename",{path:item.path,name:$("renameValue").value});closeModal();await navigate(state.path,{history:false});toast("Item renamed","success")}catch(e){toast(e.message,"error")}}}]);setTimeout(()=>$("renameValue").select(),0)}
+    function extractSelected(){const item=selectedItem();if(!item)return;modal(`Extract ${item.name}`,`<div class="field"><label>Destination directory</label><input id="extractDestination" value="${esc(state.path)}"></div>`,[{label:"Cancel",action:closeModal},{label:"Extract",primary:true,action:async()=>{busy(true);try{await post("api/extract",{path:item.path,destination:$("extractDestination").value});closeModal();await navigate(state.path,{history:false});toast("Archive extracted","success")}catch(e){toast(e.message,"error")}finally{busy(false)}}}])}
+    function deleteSelected(){const item=selectedItem();if(!item)return;modal("Move to Trash",`Move <strong>${esc(item.name)}</strong> to Trash?`,[{label:"Cancel",action:closeModal},{label:"Move to Trash",danger:true,action:async()=>{try{await post("api/delete",{path:item.path,permanent:false});closeModal();await navigate(state.path,{history:false});toast("Moved to Trash","success")}catch(e){toast(e.message,"error")}}}])}
+    async function search(){const q=$("searchInput").value.trim();if(q.length<2){if(state.searching)navigate(state.path,{history:false});return}busy(true);try{const data=await api(`api/search?path=${encodeURIComponent(state.path)}&q=${encodeURIComponent(q)}`);state.items=data.items;state.selected.clear();state.searching=true;render();if(data.truncated)toast("Search results were limited")}catch(e){toast(e.message,"error")}finally{busy(false)}}
+    $("refreshBtn").onclick=()=>navigate(state.path,{history:false});$("upBtn").onclick=()=>navigate(state.parent);$("backBtn").onclick=()=>{if(state.historyIndex>0){state.historyIndex--;navigate(state.history[state.historyIndex],{history:false})}};$("forwardBtn").onclick=()=>{if(state.historyIndex<state.history.length-1){state.historyIndex++;navigate(state.history[state.historyIndex],{history:false})}};
+    $("newFolderBtn").onclick=()=>promptCreate("directory");$("newFileBtn").onclick=()=>promptCreate("file");$("uploadBtn").onclick=()=>$("fileInput").click();$("fileInput").onchange=e=>{uploadFiles([...e.target.files]);e.target.value=""};
+    $("editBtn").onclick=()=>openEditor(selectedItem());$("renameBtn").onclick=renameSelected;$("extractBtn").onclick=extractSelected;$("downloadBtn").onclick=()=>{const i=selectedItem();if(i)location.href=`api/download?path=${encodeURIComponent(i.path)}`};$("propertiesBtn").onclick=()=>showProperties();$("infoBtn").onclick=showAbout;$("sidebarInfoBtn").onclick=showAbout;$("copyBtn").onclick=()=>destinationDialog("copy");$("moveBtn").onclick=()=>destinationDialog("move");$("deleteBtn").onclick=deleteSelected;
+    $("archiveBtn").onclick=()=>modal("Create ZIP archive",`<div class="field"><label>Archive name</label><input id="archiveName" value="archive.zip"></div>`,[{label:"Cancel",action:closeModal},{label:"Create",primary:true,action:async()=>{busy(true);try{await post("api/archive",{paths:[...state.selected],destination:state.path,name:$("archiveName").value});closeModal();await navigate(state.path,{history:false});toast("Archive created","success")}catch(e){toast(e.message,"error")}finally{busy(false)}}}]);
+    $("selectAll").onchange=e=>{state.selected=e.target.checked?new Set(state.items.map(i=>i.path)):new Set();render()};
+    $("mobileMenuBtn").onclick=openMobileMenu;$("sidebarOverlay").onclick=closeMobileMenu;
+    let searchTimer;$("searchInput").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(search,350)};
+    const content=$("content"),drop=$("dropzone");for(const event of["dragenter","dragover"]){content.addEventListener(event,e=>{e.preventDefault();drop.classList.add("show")})}for(const event of["dragleave","drop"]){content.addEventListener(event,e=>{e.preventDefault();drop.classList.remove("show")})}content.addEventListener("drop",e=>uploadFiles([...e.dataTransfer.files]));
+    document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeMobileMenu()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="r"){e.preventDefault();navigate(state.path,{history:false})}});
+    init();
+})();
+</script>
+</body>
+</html>

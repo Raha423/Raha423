@@ -1,0 +1,3 @@
+version=1.0.0
+name=WEVPSApiCore
+description=REST API gateway for the whole server: system metrics & disks & packages, processes (signals/open files), systemd (reload/mask/failed), terminal, files (checksum/symlink), GNU screen sessions, docker (inspect/pause/pull/prune), network, ufw + fail2ban, git, user management and cron — secured by scoped, rate-limited, expiring API keys with a live dashboard panel and interactive documentation.

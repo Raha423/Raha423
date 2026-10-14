@@ -1,0 +1,56 @@
+{
+  "WeVPSControl": {
+    "v": "1.0.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/WeVPSControl.zip",
+    "description": "Apira VPS single server control center.",
+    "open_url": "/index"
+  },
+  "FileManager": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/FileManager.zip",
+    "description": "Secure local server file manager.",
+    "open_url": "/filemanager/"
+  },
+  "WeVPSTerminal": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/Terminal.zip",
+    "description": "Manage server terminal.",
+    "open_url": "/wevpsterminal/"
+  },
+  "WEVPSNetwork": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/WEVPSNetwork.zip",
+    "description": "Professional network management, diagnostics and IP reputation toolbox.",
+    "open_url": "/wevpsnetwork/"
+  },
+  "BackupCenter": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/BackupCenter.zip",
+    "description": "Professional server backup, recovery and secure delivery management center.",
+    "open_url": "/backupcenter/"
+  },
+  "WEVPSInstaller": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/WEVPSInstaller.zip",
+    "description": "Automated operating system deployment and server installation management center.",
+    "open_url": "/wevpsinstaller/"
+  },
+  "WEVPSOpsDeck": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/WEVPSOpsDeck.zip",
+    "description": "One panel for containers, git, automation and terminal sessions.",
+    "open_url": "/wevpsopsdeck/"
+  },
+  "ResourceSentinel": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/ResourceSentinel.zip",
+    "description": "Live server resource monitoring with configurable alerts.",
+    "open_url": "/resourcesentinel/"
+  },
+  "WEVPSApiCore": {
+    "v": "1.0.0",
+    "url": "https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Tools/WEVPSApiCore.zip",
+    "description": "REST API gateway for server operations and monitoring.",
+    "open_url": "/wevpsapicore/"
+  }
+}

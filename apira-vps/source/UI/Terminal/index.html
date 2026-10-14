@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#080b14">
+    <title>Apira VPS Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+    <style>
+        :root{color-scheme:dark;--bg:#080b14;--panel:rgba(14,18,31,.92);--border:rgba(255,255,255,.085);--text:#edf2ff;--muted:#7f899f;--purple:#8b5cf6;--cyan:#22d3ee;--green:#22c55e;--red:#ef4444}
+        *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}body{color:var(--text);font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at 90% 0%,rgba(139,92,246,.16),transparent 30%),radial-gradient(circle at 5% 100%,rgba(34,211,238,.08),transparent 34%),var(--bg)}button{font:inherit;color:inherit}.app{height:100dvh;display:flex;flex-direction:column;padding:16px;gap:12px}.topbar{min-height:62px;display:flex;align-items:center;gap:14px;padding:10px 13px;border:1px solid var(--border);border-radius:16px;background:rgba(12,16,28,.82);backdrop-filter:blur(20px)}.brand{display:flex;align-items:center;gap:11px;min-width:220px}.brand-mark{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;font:700 18px "JetBrains Mono",monospace;background:linear-gradient(135deg,#7c3aed,#8b5cf6 55%,#22d3ee);box-shadow:0 12px 30px rgba(139,92,246,.25)}.brand-title{font-weight:700;letter-spacing:-.02em}.brand-title span{color:#b7a1ff}.brand-subtitle{margin-top:3px;color:var(--muted);font:500 11px "JetBrains Mono",monospace}.connection{display:flex;align-items:center;gap:8px;margin-left:auto;color:#b7c2d8;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:#64748b}.dot.online{background:var(--green);box-shadow:0 0 14px rgba(34,197,94,.65)}.actions{display:flex;gap:7px}.icon-btn{height:36px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;background:rgba(255,255,255,.035)}.icon-btn:hover{border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.1)}.terminal-shell{position:relative;min-height:0;flex:1;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);border-radius:18px;background:rgba(6,9,16,.96);box-shadow:0 30px 90px rgba(0,0,0,.45)}.window-bar{height:44px;flex:0 0 auto;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}.lights{display:flex;gap:7px}.light{width:10px;height:10px;border-radius:50%}.light:nth-child(1){background:#ff5f57}.light:nth-child(2){background:#febc2e}.light:nth-child(3){background:#28c840}.tab{margin-left:16px;color:#9da8bc;font:500 11px "JetBrains Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.terminal-host{min-height:0;flex:1;padding:14px 8px 8px 14px;overflow:hidden}.terminal-host .xterm{height:100%}.terminal-host .xterm-viewport{scrollbar-color:#29324a transparent;scrollbar-width:thin}.overlay{position:absolute;inset:44px 0 0;z-index:5;display:none;place-items:center;background:rgba(5,8,15,.72);backdrop-filter:blur(5px)}.overlay.show{display:grid}.overlay-card{text-align:center;padding:24px}.overlay-title{font-size:17px;font-weight:700}.overlay-text{max-width:380px;margin:8px auto 17px;color:var(--muted);font-size:13px;line-height:1.6}.statusbar{min-height:32px;display:flex;align-items:center;gap:18px;padding:0 14px;border-top:1px solid rgba(255,255,255,.06);color:#69758c;font:500 10px "JetBrains Mono",monospace}.statusbar span:last-child{margin-left:auto}.mobile-keyboard{display:none;height:42px;border:1px solid var(--border);border-radius:11px;background:rgba(255,255,255,.04)}
+        .keybar{display:flex;gap:5px;padding:6px 10px;border-top:1px solid rgba(255,255,255,.055);overflow-x:auto;overscroll-behavior-x:contain;background:rgba(255,255,255,.018)}.keybar button{min-width:43px;height:31px;border:1px solid var(--border);border-radius:7px;color:#9ca8bd;font:600 10px "JetBrains Mono",monospace;cursor:pointer;background:rgba(255,255,255,.035)}.keybar button:hover{color:#fff;border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.1)}.paste-panel{position:fixed;inset:0;z-index:50;display:none;place-items:end center;padding:16px;background:rgba(3,5,10,.72);backdrop-filter:blur(7px)}.paste-panel.show{display:grid}.paste-card{width:min(100%,560px);padding:15px;border:1px solid var(--border);border-radius:16px;background:#101625;box-shadow:0 25px 80px rgba(0,0,0,.55)}.paste-title{font-weight:700}.paste-hint{margin:5px 0 11px;color:var(--muted);font-size:12px}.paste-area{width:100%;min-height:130px;resize:vertical;padding:11px;border:1px solid var(--border);border-radius:10px;outline:0;color:#e8edf8;background:#080c15;font:12px/1.5 "JetBrains Mono",monospace}.paste-area:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.12)}.paste-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+        @media(max-width:720px){.app{padding:0;gap:0}.topbar{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) auto;padding:8px 9px calc(8px + env(safe-area-inset-top));gap:7px;border-width:0 0 1px;border-radius:0}.brand{min-width:0}.brand-mark{width:34px;height:34px;border-radius:10px;font-size:15px}.brand-title{font-size:14px}.brand-subtitle{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.connection{margin:0}.connection span{display:none}.actions{grid-column:1/-1;width:100%;display:flex;overflow-x:auto;padding:1px 0 2px;scrollbar-width:none}.actions::-webkit-scrollbar{display:none}.actions form{display:flex}.icon-btn{min-width:66px;height:42px;padding:0 12px;flex:0 0 auto}.mobile-keyboard{display:inline-flex}.terminal-shell{border:0;border-radius:0}.window-bar{display:none}.overlay{inset:0}.terminal-host{padding:8px 2px 2px 7px}.terminal-host .xterm{font-size:13px}.keybar{padding:7px 7px calc(7px + env(safe-area-inset-bottom))}.keybar button{min-width:54px;height:40px;font-size:11px}.statusbar{display:none}.paste-panel{padding:8px;align-items:end}.paste-card{border-radius:16px 16px 10px 10px}.paste-area{min-height:170px;font-size:14px}}
+    </style>
+</head>
+<body>
+<div class="app">
+    <header class="topbar">
+        <div class="brand"><div class="brand-mark">›_</div><div><div class="brand-title">Apira VPS <span>Terminal</span></div><div class="brand-subtitle" id="serverLabel">secure shell</div></div></div>
+        <div class="connection"><i class="dot" id="statusDot"></i><span id="statusText">Connecting</span></div>
+        <div class="actions">
+            <button class="icon-btn mobile-keyboard" id="keyboardButton" title="Open keyboard">⌨</button>
+            <button class="icon-btn" id="copyButton" title="Copy selected text only">Copy</button>
+            <button class="icon-btn" id="pasteButton" title="Paste from clipboard">Paste</button>
+            <button class="icon-btn" id="clearButton" title="Clear terminal">Clear</button>
+            <button class="icon-btn" id="fullscreenButton" title="Toggle fullscreen">⛶</button>
+            <form method="post" action="/logout"><button class="icon-btn" type="submit"><span class="action-text">Logout</span> ↪</button></form>
+        </div>
+    </header>
+    <main class="terminal-shell" id="terminalShell">
+        <div class="window-bar"><div class="lights"><i class="light"></i><i class="light"></i><i class="light"></i></div><div class="tab" id="tabLabel">terminal — connecting</div></div>
+        <div class="terminal-host" id="terminalHost"></div>
+        <div class="overlay" id="overlay"><div class="overlay-card"><div class="overlay-title" id="overlayTitle">Connection closed</div><div class="overlay-text" id="overlayText">The terminal session is no longer connected.</div><button class="icon-btn" id="reconnectButton">Reconnect</button></div></div>
+        <div class="keybar"><button data-key="ctrl-c">Ctrl+C</button><button data-key="tab">Tab</button><button data-key="esc">Esc</button><button data-key="up">↑</button><button data-key="down">↓</button><button data-key="left">←</button><button data-key="right">→</button><button data-key="ctrl-d">Ctrl+D</button><button data-key="ctrl-z">Ctrl+Z</button><button data-key="ctrl-l">Ctrl+L</button></div>
+        <footer class="statusbar"><span>UTF-8</span><span>xterm-256color</span><span id="sizeLabel">—</span><span id="transportLabel">WebSocket</span></footer>
+    </main>
+</div>
+<div class="paste-panel" id="pastePanel"><div class="paste-card"><div class="paste-title">Paste into terminal</div><div class="paste-hint">Long-press inside the box, choose Paste, then tap Send.</div><textarea class="paste-area" id="pasteArea" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea><div class="paste-actions"><button class="icon-btn" id="cancelPasteButton">Cancel</button><button class="icon-btn" id="sendPasteButton">Send</button></div></div></div>
+<script>
+(() => {
+    "use strict";
+    const MAIN_LOGIN_URL = "http://82.22.40.109:789/login";
+    const terminal = new Terminal({
+        cursorBlink:true,cursorStyle:"block",scrollback:10000,convertEol:false,
+        fontFamily:'"JetBrains Mono",Consolas,monospace',fontSize:12,lineHeight:1.28,
+        allowTransparency:true,theme:{background:"#060910",foreground:"#d7dfef",cursor:"#b7a1ff",cursorAccent:"#060910",selectionBackground:"#6d5dfc66",black:"#111827",red:"#ef4444",green:"#22c55e",yellow:"#f59e0b",blue:"#3b82f6",magenta:"#a78bfa",cyan:"#22d3ee",white:"#e5e7eb",brightBlack:"#64748b",brightRed:"#fb7185",brightGreen:"#4ade80",brightYellow:"#fbbf24",brightBlue:"#60a5fa",brightMagenta:"#c4b5fd",brightCyan:"#67e8f9",brightWhite:"#fff"}
+    });
+    const fitAddon = new FitAddon.FitAddon();
+    terminal.loadAddon(fitAddon);
+    terminal.open(document.getElementById("terminalHost"));
+    let socket = null;
+    let resizeTimer = null;
+    const overlay = document.getElementById("overlay");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+
+    function mountedPath() {
+        const path = window.location.pathname;
+        return path.endsWith("/") ? path : path + "/";
+    }
+    function setStatus(text, online=false) {
+        statusText.textContent = text;
+        statusDot.classList.toggle("online", online);
+    }
+    function send(message) {
+        if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
+    }
+    function resizeTerminal() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            fitAddon.fit();
+            document.getElementById("sizeLabel").textContent = `${terminal.cols}×${terminal.rows}`;
+            send({type:"resize",cols:terminal.cols,rows:terminal.rows});
+        }, 60);
+    }
+    async function loadSession() {
+        const response = await fetch("api/session", {credentials:"same-origin",cache:"no-store"});
+        if (response.status === 401) { window.location.href = MAIN_LOGIN_URL; return null; }
+        if (!response.ok) throw new Error(`Session check failed (${response.status})`);
+        return response.json();
+    }
+    async function connect() {
+        overlay.classList.remove("show");
+        setStatus("Connecting");
+        try {
+            const info = await loadSession();
+            if (!info) return;
+            document.getElementById("serverLabel").textContent = `${info.username}@${info.hostname}`;
+            document.getElementById("tabLabel").textContent = `${info.username}@${info.hostname} — interactive shell`;
+            const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+            socket = new WebSocket(`${scheme}//${location.host}${mountedPath()}ws`);
+            socket.addEventListener("open", () => {setStatus("Connected",true);document.getElementById("transportLabel").textContent="WebSocket · live";resizeTerminal();terminal.focus();});
+            socket.addEventListener("message", event => terminal.write(event.data));
+            socket.addEventListener("close", event => {setStatus("Disconnected");document.getElementById("transportLabel").textContent="WebSocket · closed";document.getElementById("overlayTitle").textContent=event.code===1008?"Authentication required":"Connection closed";document.getElementById("overlayText").textContent=event.code===1008?"Your Apira VPS session has expired. Sign in again to continue.":"The interactive shell ended or the network connection was interrupted.";overlay.classList.add("show");if(event.code===1008)setTimeout(()=>location.href=MAIN_LOGIN_URL,1000);});
+            socket.addEventListener("error", () => setStatus("Connection error"));
+        } catch (error) {setStatus("Unavailable");document.getElementById("overlayTitle").textContent="Terminal unavailable";document.getElementById("overlayText").textContent=error.message;overlay.classList.add("show");}
+    }
+    terminal.onData(data => send({type:"input",data}));
+    terminal.onResize(size => send({type:"resize",cols:size.cols,rows:size.rows}));
+    terminal.attachCustomKeyEventHandler(event => {
+        if (event.type!=="keydown") return true;
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase()==="c") {const text=terminal.getSelection();if(text)copySelectedText(text).catch(()=>{});return false;}
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase()==="v") {if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.readText().then(text=>send({type:"input",data:text})).catch(openPastePanel);else openPastePanel();return false;}
+        return true;
+    });
+    async function copySelectedText(text){
+        if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return;}
+        const helper=document.createElement("textarea");helper.value=text;helper.setAttribute("readonly","");helper.style.position="fixed";helper.style.opacity="0";helper.style.pointerEvents="none";document.body.appendChild(helper);helper.focus();helper.select();const copied=document.execCommand("copy");helper.remove();if(!copied)throw new Error("Copy failed");
+    }
+    const pastePanel=document.getElementById("pastePanel");
+    const pasteArea=document.getElementById("pasteArea");
+    function openPastePanel(){pasteArea.value="";pastePanel.classList.add("show");setTimeout(()=>pasteArea.focus(),60);}
+    function closePastePanel(){pastePanel.classList.remove("show");terminal.focus();}
+    document.getElementById("copyButton").addEventListener("click",async()=>{
+        const selectedText=terminal.getSelection();
+        if(!selectedText){statusText.textContent="Select text first";setTimeout(()=>setStatus(socket&&socket.readyState===WebSocket.OPEN?"Connected":"Disconnected",socket&&socket.readyState===WebSocket.OPEN),1400);return;}
+        try{await copySelectedText(selectedText);statusText.textContent="Selection copied";setTimeout(()=>setStatus("Connected",true),1200);}catch{statusText.textContent="Copy failed";}
+    });
+    document.getElementById("pasteButton").addEventListener("click",async()=>{
+        if(navigator.clipboard&&window.isSecureContext){try{const text=await navigator.clipboard.readText();if(text)send({type:"input",data:text});terminal.focus();return;}catch{}}
+        openPastePanel();
+    });
+    document.getElementById("cancelPasteButton").addEventListener("click",closePastePanel);
+    document.getElementById("sendPasteButton").addEventListener("click",()=>{if(pasteArea.value)send({type:"input",data:pasteArea.value});closePastePanel();});
+    pastePanel.addEventListener("click",event=>{if(event.target===pastePanel)closePastePanel();});
+    document.getElementById("clearButton").addEventListener("click",()=>{terminal.clear();terminal.focus();});
+    document.getElementById("fullscreenButton").addEventListener("click",()=>{if(document.fullscreenElement)document.exitFullscreen();else document.getElementById("terminalShell").requestFullscreen();});
+    document.getElementById("keyboardButton").addEventListener("click",()=>terminal.focus());
+    document.getElementById("reconnectButton").addEventListener("click",()=>{if(socket)socket.close();connect();});
+    const keySequences={"ctrl-c":"\x03","tab":"\t","esc":"\x1b","up":"\x1b[A","down":"\x1b[B","left":"\x1b[D","right":"\x1b[C","ctrl-d":"\x04","ctrl-z":"\x1a","ctrl-l":"\x0c"};
+    document.querySelectorAll("[data-key]").forEach(button=>button.addEventListener("click",()=>{send({type:"input",data:keySequences[button.dataset.key]||""});terminal.focus();}));
+    window.addEventListener("resize",resizeTerminal);
+    document.addEventListener("fullscreenchange",resizeTerminal);
+    new ResizeObserver(resizeTerminal).observe(document.getElementById("terminalHost"));
+    resizeTerminal();
+    connect();
+})();
+</script>
+</body>
+</html>
