@@ -114,5 +114,6 @@ jobs:
             echo 'No package changes.'
           else
             git commit -m 'Mirror optimized bilingual Apira VPS packages'
+            git pull --rebase origin main
             git push
           fi
