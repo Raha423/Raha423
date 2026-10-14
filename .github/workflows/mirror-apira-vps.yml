@@ -108,6 +108,7 @@ jobs:
                   control_ui = d / 'WeVPSControl/ui/index.html'
                   subprocess.run([sys.executable, 'apira-vps/patches/security_guides.py', str(control_ui)], check=True)
                   subprocess.run([sys.executable, 'apira-vps/patches/control_service_guide.py', str(control_ui)], check=True)
+                  subprocess.run([sys.executable, 'apira-vps/patches/tools_refresh_retry.py', str(control_ui)], check=True)
                   for installer in d.rglob('install.sh'):
                       control = installer.parent
                       shutil.copy2(auth_dir / 'apira_auth.py', control / 'apira_auth.py')
