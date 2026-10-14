@@ -32,6 +32,13 @@ jobs:
           text_ext={'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
           replacements=[
               ('https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Notifications','https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications'),
+              ('Sign in · WeVPS','Sign in · Apira VPS'),
+              ('File Manager · WeVPS','File Manager · Apira VPS'),
+              ('WeVPS File Manager','Apira VPS File Manager'),
+              ('WeVPS tools center','Apira VPS tools center'),
+              ('Synced directly from the WeVPS GitHub repository.','Synced directly from the Apira VPS GitHub repository.'),
+              ('The main WeVPS session key is unavailable.','The main Apira VPS session key is unavailable.'),
+              ('main WeVPS login','main Apira VPS login'),
               ('WeVPS Control Panel','Apira VPS'),
               ('WeVPS Control Center','Apira VPS'),
               ('WeVPS Control','Apira VPS'),
@@ -42,6 +49,7 @@ jobs:
               ('WEVPS ApiCore','Apira VPS ApiCore'),
               ('WEVPS Backup Center','Apira VPS Backup Center'),
               ('WEVPS Resource Sentinel','Apira VPS Resource Sentinel'),
+              ('WEVPS <span>','Apira VPS <span>'),
               ('WEVPS<span>','Apira VPS<span>'),
               ('WeVPS <span>','Apira VPS <span>'),
               ('Built by <b>WEVPS</b>','Built by <b>Apira VPS</b>'),
