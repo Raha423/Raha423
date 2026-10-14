@@ -4737,6 +4737,27 @@
                     </button>
                 </div>
 
+
+                <!-- APIRA_BACKUP_LANGUAGE_SETTINGS_BEGIN -->
+                <section class="panel apira-language-panel" id="apiraLanguageSetting" data-i18n-skip="1">
+                    <div class="panel-header apira-language-panel-head">
+                        <div>
+                            <div class="panel-title apira-lang-title">Language / زبان</div>
+                            <div class="panel-subtitle apira-lang-desc">Choose the display language for Backup Center / زبان نمایش مرکز بکاپ را انتخاب کنید</div>
+                        </div>
+                        <i data-lucide="languages"></i>
+                    </div>
+                    <div class="panel-body apira-language-panel-body">
+                        <label class="apira-language-label">Interface language / زبان رابط کاربری</label>
+                        <select class="apira-language-select" aria-label="Language" onchange="if(window.ApiraI18n){window.ApiraI18n.setLanguage(this.value)}else{localStorage.setItem('apira_language',this.value);location.reload()}">
+                            <option value="en">English</option>
+                            <option value="fa">فارسی</option>
+                        </select>
+                        <div class="apira-language-hint">This setting is synchronized with the main panel and other Apira VPS tools. / این تنظیم با پنل اصلی و بقیه ابزارهای Apira VPS همگام می‌شود.</div>
+                    </div>
+                </section>
+                <!-- APIRA_BACKUP_LANGUAGE_SETTINGS_END -->
+
                 <section class="panel">
                     <div class="panel-header">
                         <div>
