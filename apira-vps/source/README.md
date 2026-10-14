@@ -34,25 +34,28 @@ A strong random password is generated during the first installation and shown on
 
 ## Languages
 
-Apira VPS supports both **English** and **Persian (فارسی)**.
+Apira VPS supports both **English** and **Persian (فارسی)** across the main control panel and published extensions.
 
 Open **Settings → Language** and choose:
 
 - **English** — left-to-right interface.
 - **فارسی** — Persian translation with right-to-left (RTL) layout.
 
-The selected language is stored locally in the browser and is shared across the main control panel and installed Apira VPS extensions. Dynamic interface text such as status cards, dialogs, notifications and operation messages is translated as it appears.
+The selected language is stored locally in the browser, synchronized between open Apira VPS tabs, and also passed to same-origin tool links through a `lang` parameter. Returning to an existing tool tab re-syncs the selected language automatically.
+
+Dynamic interface updates are translated in small batches instead of translating every DOM mutation immediately. This reduces unnecessary browser work on live tools such as Network and resource-monitoring pages, especially on mobile devices.
 
 Technical identifiers and executable content such as shell commands, Linux paths, API fields, Docker/Git names, code blocks and protocol names remain unchanged where translating them could make the interface inaccurate or break copy/paste workflows.
 
 Translation resources are maintained in:
 
 ```text
-apira-vps/i18n/apira-i18n.js
+apira-vps/i18n/apira-i18n-v2.js
 apira-vps/i18n/apira-fa.json
+apira-vps/i18n/apira-fa-extra.json
 ```
 
-The package publishing workflow embeds these resources directly into the HTML of every published tool, so Persian support does not depend on an external translation service or a separate static-file route.
+The package publishing workflow merges the Persian dictionaries and embeds the optimized runtime directly into every published tool. Persian support therefore does not depend on an external translation service or a separate static-file route.
 
 ## Interactive Security Guides
 
