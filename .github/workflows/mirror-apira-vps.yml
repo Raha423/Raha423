@@ -1,0 +1,35 @@
+name: Mirror Apira VPS packages
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/mirror-apira-vps.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download upstream packages
+        run: |
+          set -euxo pipefail
+          mkdir -p apira-vps/Tools
+          base='https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Tools'
+          for f in WeVPSControl.zip FileManager.zip Terminal.zip WEVPSNetwork.zip BackupCenter.zip WEVPSInstaller.zip WEVPSOpsDeck.zip ResourceSentinel.zip WEVPSApiCore.zip; do
+            curl -fL --retry 3 "$base/$f" -o "apira-vps/Tools/$f"
+          done
+      - name: Commit mirrored packages
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apira-vps/Tools
+          if git diff --cached --quiet; then
+            echo 'No package changes.'
+          else
+            git commit -m 'Mirror Apira VPS packages'
+            git push
+          fi
