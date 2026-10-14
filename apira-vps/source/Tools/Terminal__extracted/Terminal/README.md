@@ -1,9 +1,9 @@
 # Apira VPS Terminal
 
-Terminal is an independent Flask application mounted by the main VMTool WSGI
+Terminal is an independent Flask application mounted by the main Apira VPS WSGI
 application. It does not run on a second port and has no separate login page.
 
-Routes on the single VMTool port:
+Routes on the single Apira VPS port:
 
 - `/` — blank themed page
 - `/login` — main Apira VPS login
@@ -26,7 +26,7 @@ The extension is enabled by listing `Terminal` in the root `Extensions.txt`.
 Future Terminal changes remain inside `Extensions/Terminal`; the main app loads
 enabled extension applications dynamically.
 
-Commands execute with the operating-system permissions of the main VMTool
+Commands execute with the operating-system permissions of the main Apira VPS
 service user.
 
 The Terminal uses Flask-Sock, WebSocket, a real Linux PTY, and xterm.js. Each
@@ -43,5 +43,5 @@ Extensions/Terminal/bin/build-linux.sh
 
 The generated `Extensions/Terminal/bin/app*.so` is preferred automatically by
 the main extension loader. Build it with the same Python major/minor version
-and CPU architecture used to run VMTool. After testing, `app.py` can be moved
+and CPU architecture used to run Apira VPS. After testing, `app.py` can be moved
 to a private backup outside `Extensions/Terminal`; `index.html` must remain.
