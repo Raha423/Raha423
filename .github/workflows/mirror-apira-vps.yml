@@ -14,14 +14,74 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download upstream packages
+      - name: Download and brand upstream packages
         run: |
           set -euxo pipefail
-          mkdir -p apira-vps/Tools
+          rm -rf .mirror-work
+          mkdir -p apira-vps/Tools .mirror-work
           base='https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Tools'
           for f in WeVPSControl.zip FileManager.zip Terminal.zip WEVPSNetwork.zip BackupCenter.zip WEVPSInstaller.zip WEVPSOpsDeck.zip ResourceSentinel.zip WEVPSApiCore.zip; do
-            curl -fL --retry 3 "$base/$f" -o "apira-vps/Tools/$f"
+            curl -fL --retry 3 "$base/$f" -o ".mirror-work/$f"
           done
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile, shutil
+          root=Path('.mirror-work')
+          out=Path('apira-vps/Tools')
+          files=['WeVPSControl.zip','FileManager.zip','Terminal.zip','WEVPSNetwork.zip','BackupCenter.zip','WEVPSInstaller.zip','WEVPSOpsDeck.zip','ResourceSentinel.zip','WEVPSApiCore.zip']
+          text_ext={'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
+          replacements=[
+              ('https://raw.githubusercontent.com/WEVPSAPI/VMTOOL/main/Notifications','https://raw.githubusercontent.com/Raha423/Raha423/main/apira-vps/Notifications'),
+              ('WeVPS Control Panel','Apira VPS'),
+              ('WeVPS Control Center','Apira VPS'),
+              ('WeVPS Control','Apira VPS'),
+              ('WeVPS Terminal','Apira VPS Terminal'),
+              ('WEVPS Network','Apira VPS Network'),
+              ('WEVPS Installer','Apira VPS Installer'),
+              ('WEVPS OpsDeck','Apira VPS OpsDeck'),
+              ('WEVPS ApiCore','Apira VPS ApiCore'),
+              ('WEVPS Backup Center','Apira VPS Backup Center'),
+              ('WEVPS Resource Sentinel','Apira VPS Resource Sentinel'),
+              ('WEVPS<span>','Apira VPS<span>'),
+              ('WeVPS <span>','Apira VPS <span>'),
+              ('Built by <b>WEVPS</b>','Built by <b>Apira VPS</b>'),
+              ('<strong>WEVPS</strong>','<strong>Apira VPS</strong>'),
+              ('Built by WeVPS','Built by Apira VPS'),
+              ('Built by WEVPS','Built by Apira VPS'),
+              ('maintained by WEVPS','maintained by Apira VPS'),
+              ('maintained by WeVPS','maintained by Apira VPS'),
+              ('Your WeVPS session','Your Apira VPS session'),
+              ('Shared WeVPS session','Shared Apira VPS session'),
+              ('WeVPS API','Apira VPS API'),
+              ('WeVPS agent','Apira VPS agent'),
+              ('WeVPS extension','Apira VPS extension'),
+              ('WeVPS notification','Apira VPS notification'),
+              ('WeVPS updates','Apira VPS updates'),
+              ('from WeVPS','from Apira VPS'),
+              ('The WeVPS service','The Apira VPS service'),
+              ('WEVPS backup completed','Apira VPS backup completed'),
+              ('WEVPS Backup completed','Apira VPS Backup completed'),
+              ('WEVPS Backup Center connected','Apira VPS Backup Center connected'),
+              ('VMTool is not active','Apira VPS is not active'),
+          ]
+          for zname in files:
+              src=root/zname
+              d=root/(zname+'.d')
+              if d.exists(): shutil.rmtree(d)
+              d.mkdir()
+              with zipfile.ZipFile(src) as z: z.extractall(d)
+              for p in d.rglob('*'):
+                  if not p.is_file() or p.suffix.lower() not in text_ext: continue
+                  try: s=p.read_text(encoding='utf-8')
+                  except UnicodeDecodeError: continue
+                  t=s
+                  for a,b in replacements: t=t.replace(a,b)
+                  if t!=s: p.write_text(t,encoding='utf-8')
+              target=out/zname
+              with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as z:
+                  for p in sorted(d.rglob('*')):
+                      if p.is_file(): z.write(p,p.relative_to(d))
+          PY
       - name: Commit mirrored packages
         run: |
           git config user.name 'github-actions[bot]'
@@ -30,8 +90,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No package changes.'
           else
-            git commit -m 'Mirror Apira VPS packages'
+            git commit -m 'Mirror branded Apira VPS packages'
             git push
           fi
-
-# trigger mirror via merged workflow update
