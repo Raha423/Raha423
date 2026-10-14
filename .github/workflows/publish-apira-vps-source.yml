@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/publish-apira-vps-source.yml'
       - 'apira-vps/Tools/**'
+      - 'apira-vps/i18n/**'
       - 'apira-vps/Backend'
       - 'apira-vps/Extensions'
       - 'apira-vps/Notifications'
@@ -27,7 +28,7 @@ jobs:
         run: |
           set -euxo pipefail
           rm -rf apira-vps/source
-          mkdir -p apira-vps/source/Tools/packages apira-vps/source/UI
+          mkdir -p apira-vps/source/Tools/packages apira-vps/source/UI apira-vps/source/i18n
 
           cp apira-vps/Backend apira-vps/source/Backend
           cp apira-vps/Extensions apira-vps/source/Extensions
@@ -35,6 +36,7 @@ jobs:
           cp apira-vps/LICENSE apira-vps/source/LICENSE
           cp apira-vps/README.md apira-vps/source/README.md
           cp apira-vps/NOTICE.md apira-vps/source/NOTICE.md
+          cp apira-vps/i18n/* apira-vps/source/i18n/
           cp apira-vps/Tools/*.zip apira-vps/source/Tools/packages/
 
           for archive in apira-vps/Tools/*.zip; do
@@ -65,6 +67,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'Source tree is already up to date.'
           else
-            git commit -m 'Publish expanded Apira VPS source tree'
+            git commit -m 'Publish localized Apira VPS source tree'
             git push
           fi
