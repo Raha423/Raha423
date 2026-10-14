@@ -33,3 +33,5 @@ jobs:
             git commit -m 'Mirror Apira VPS packages'
             git push
           fi
+
+# trigger mirror via merged workflow update
