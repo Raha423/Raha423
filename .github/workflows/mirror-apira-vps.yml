@@ -59,6 +59,13 @@ jobs:
                   s += '\n' + bundle + '\n'
               path.write_text(s, encoding='utf-8')
 
+          strict_csp_html = {
+              'WEVPSInstaller.zip': 'WEVPSInstaller/bin/index.html',
+              'WEVPSOpsDeck.zip': 'WEVPSOpsDeck/index.html',
+              'ResourceSentinel.zip': 'ResourceSentinel/index.html',
+              'WEVPSApiCore.zip': 'WEVPSApiCore/index.html',
+          }
+
           for zname in files:
               src = root / zname
               d = root / (zname + '.d')
@@ -81,12 +88,18 @@ jobs:
               for html in d.rglob('*.html'): inject_i18n(html)
 
               if zname == 'BackupCenter.zip':
-                  backup_ui = next(d.rglob('BackupCenter/index.html'))
+                  backup_ui = d / 'BackupCenter/index.html'
                   subprocess.run([sys.executable, 'apira-vps/patches/backup_language_settings.py', str(backup_ui)], check=True)
+                  subprocess.run([sys.executable, 'apira-vps/patches/backup_reliability.py', str(backup_ui)], check=True)
+
+              if zname in strict_csp_html:
+                  strict_ui = d / strict_csp_html[zname]
+                  subprocess.run([sys.executable, 'apira-vps/patches/externalize_i18n.py', str(strict_ui)], check=True)
 
               if zname == 'WeVPSControl.zip':
-                  control_ui = next(d.rglob('ui/index.html'))
+                  control_ui = d / 'WeVPSControl/ui/index.html'
                   subprocess.run([sys.executable, 'apira-vps/patches/security_guides.py', str(control_ui)], check=True)
+                  subprocess.run([sys.executable, 'apira-vps/patches/control_service_guide.py', str(control_ui)], check=True)
                   for installer in d.rglob('install.sh'):
                       control = installer.parent
                       shutil.copy2(auth_dir / 'apira_auth.py', control / 'apira_auth.py')
@@ -117,7 +130,7 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No package changes.'
           else
-            git commit -m 'Mirror optimized bilingual Apira VPS packages'
+            git commit -m 'Mirror audited bilingual Apira VPS packages'
             git pull --rebase origin main
             git push
           fi
