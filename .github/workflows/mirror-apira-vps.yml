@@ -44,7 +44,7 @@ jobs:
                   z.extractall(d)
 
               for p in d.rglob('*'):
-                  if not p.is_file() or p.suffix.lower() not in text_ext:
+                  if not p.is_file() or (p.suffix.lower() not in text_ext and p.name != 'install-bro'):
                       continue
                   try:
                       s = p.read_text(encoding='utf-8')
