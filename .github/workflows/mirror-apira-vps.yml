@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/mirror-apira-vps.yml'
       - 'apira-vps/auth/**'
+      - 'apira-vps/i18n/**'
 
 permissions:
   contents: write
@@ -31,8 +32,27 @@ jobs:
           root = Path('.mirror-work')
           out = Path('apira-vps/Tools')
           auth_dir = Path('apira-vps/auth')
+          i18n_dir = Path('apira-vps/i18n')
+          i18n_js = (i18n_dir / 'apira-i18n.js').read_text(encoding='utf-8').replace('</script', '<\\/script')
+          i18n_fa = (i18n_dir / 'apira-fa.json').read_text(encoding='utf-8').replace('</script', '<\\/script')
           files = ['WeVPSControl.zip','FileManager.zip','Terminal.zip','WEVPSNetwork.zip','BackupCenter.zip','WEVPSInstaller.zip','WEVPSOpsDeck.zip','ResourceSentinel.zip','WEVPSApiCore.zip']
           text_ext = {'.html','.htm','.js','.css','.md','.txt','.sh','.py','.json'}
+
+          def inject_i18n(path: Path):
+              s = path.read_text(encoding='utf-8', errors='ignore')
+              s = re.sub(r'\s*<!-- APIRA_I18N_BEGIN -->.*?<!-- APIRA_I18N_END -->', '', s, flags=re.S)
+              s = re.sub(r'\s*<script src="apira-i18n\.js\?v=[^"]+"></script>', '', s)
+              bundle = (
+                  '    <!-- APIRA_I18N_BEGIN -->\n'
+                  '    <script id="apiraFaMessages">window.__APIRA_FA_MESSAGES__ = ' + i18n_fa + ';</script>\n'
+                  '    <script id="apiraI18nRuntime">\n' + i18n_js + '\n    </script>\n'
+                  '    <!-- APIRA_I18N_END -->'
+              )
+              if '</body>' in s:
+                  s = s.replace('</body>', bundle + '\n</body>', 1)
+              else:
+                  s += '\n' + bundle + '\n'
+              path.write_text(s, encoding='utf-8')
 
           for zname in files:
               src = root / zname
@@ -61,6 +81,9 @@ jobs:
                   t = t.replace('wevps-network-', 'apira-vps-network-')
                   if t != s:
                       p.write_text(t, encoding='utf-8')
+
+              for html in d.rglob('*.html'):
+                  inject_i18n(html)
 
               if zname == 'WeVPSControl.zip':
                   for installer in d.rglob('install.sh'):
@@ -107,6 +130,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No package changes.'
           else
-            git commit -m 'Mirror standalone Apira VPS packages'
+            git commit -m 'Mirror localized Apira VPS packages'
             git push
           fi
