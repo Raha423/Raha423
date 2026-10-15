@@ -39,7 +39,7 @@ def patch(index: Path) -> None:
     safe_pattern = re.compile(r'def safe_excludes\(values: object\) -> list\[str\]:\n.*?\n\ndef checksum', re.S)
     if not safe_pattern.search(py):
         raise SystemExit('safe_excludes anchor not found')
-    py = safe_pattern.sub(safe_excludes + '\n\ndef checksum', py, count=1)
+    py = safe_pattern.sub(lambda _m: safe_excludes + '\n\ndef checksum', py, count=1)
 
     # Check free space throughout archive creation, not only once at startup.
     old_tar = '''        with tarfile.open(archive, "w:gz", compresslevel=6) as bundle:\n            for source_text in sources:\n                source = Path(source_text)\n                arcname = str(source).lstrip("/")\n                bundle.add(\n                    source,\n                    arcname=arcname,\n                    recursive=True,\n                    filter=lambda info: None\n                    if excluded(Path(info.name), excludes) else info,\n                )\n'''
@@ -110,7 +110,7 @@ def patch(index: Path) -> None:
 '''
     recover_pattern = re.compile(r'def recover_stale_running\(now: int \| None = None\) -> None:\n.*?\n\ndef scheduler_loop\(\) -> None:', re.S)
     if recover_pattern.search(py):
-        py = recover_pattern.sub(recover + '\n\ndef scheduler_loop() -> None:', py, count=1)
+        py = recover_pattern.sub(lambda _m: recover + '\n\ndef scheduler_loop() -> None:', py, count=1)
     elif 'def scheduler_loop() -> None:' in py:
         py = py.replace('def scheduler_loop() -> None:', recover + '\n\ndef scheduler_loop() -> None:', 1)
     else:
