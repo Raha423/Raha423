@@ -647,8 +647,20 @@ def backup_worker(
         marker.write_text(str(os.getpid()), encoding="utf-8")
         marker.chmod(0o600)
         excludes = safe_excludes(excludes)
-        if shutil.disk_usage(BACKUP_DIR).free < MIN_FREE_BYTES:
-            raise RuntimeError("Backup stopped because less than 512 MB of local disk space is available.")
+        free_bytes = shutil.disk_usage(BACKUP_DIR).free
+        required_free = MIN_FREE_BYTES
+        if schedule_id:
+            with database() as connection:
+                previous = connection.execute(
+                    "SELECT size FROM backups WHERE schedule_id=? AND status='completed' AND size>0 AND id<>? ORDER BY completed_at DESC LIMIT 1",
+                    (schedule_id, backup_id),
+                ).fetchone()
+            if previous:
+                required_free = max(required_free, int(previous["size"]) + 1024 * 1024 * 1024)
+        if free_bytes < required_free:
+            need_gb = required_free / (1024 ** 3)
+            free_gb = free_bytes / (1024 ** 3)
+            raise RuntimeError(f"Backup stopped before start: {free_gb:.2f} GB free; at least {need_gb:.2f} GB is required for the previous backup size plus a 1 GB safety margin.")
         checked_members = 0
         def archive_filter(info: tarfile.TarInfo):
             nonlocal checked_members
