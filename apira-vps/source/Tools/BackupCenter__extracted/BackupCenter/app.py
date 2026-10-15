@@ -217,7 +217,7 @@ def safe_excludes(values: object) -> list[str]:
     if not isinstance(values, list):
         raise ValueError("Excludes must be a list.")
     result: list[str] = []
-    # APIRA_BACKUP_RELIABILITY_V1: accept comma, whitespace, semicolon and new-line pasted patterns.
+    # APIRA_BACKUP_RELIABILITY_V2: normalize pasted values on the server too.
     for raw in values:
         for value in re.split(r"[\s,;]+", str(raw or "").strip()):
             if not value:
@@ -641,7 +641,12 @@ def backup_worker(
     retention: int = 0,
 ) -> None:
     archive = BACKUP_DIR / f"{backup_id}.tar.gz"
+    # APIRA_BACKUP_WORKER_PID_V2
+    marker = BACKUP_DIR / f".{backup_id}.worker"
     try:
+        marker.write_text(str(os.getpid()), encoding="utf-8")
+        marker.chmod(0o600)
+        excludes = safe_excludes(excludes)
         if shutil.disk_usage(BACKUP_DIR).free < MIN_FREE_BYTES:
             raise RuntimeError("Backup stopped because less than 512 MB of local disk space is available.")
         checked_members = 0
@@ -685,6 +690,7 @@ def backup_worker(
             )
         event("error", "backup_failed", f"{backup_id}: {error}")
     finally:
+        marker.unlink(missing_ok=True)
         with active_lock:
             active_jobs.discard(backup_id)
 
@@ -733,24 +739,30 @@ def validate_members(bundle: tarfile.TarFile) -> list[tarfile.TarInfo]:
 
 
 def recover_stale_running(now: int | None = None) -> None:
-    """Recover orphaned jobs left behind if a web worker dies mid-archive."""
+    """Fail orphaned running jobs and remove their incomplete archives."""
     now = int(now or time.time())
-    stale_before = now - 15 * 60
     recovered: list[str] = []
     with database() as connection:
         rows = connection.execute(
-            "SELECT id,created_at FROM backups WHERE status='running' AND created_at<=?",
-            (stale_before,),
+            "SELECT id,created_at FROM backups WHERE status='running'"
         ).fetchall()
         for row in rows:
+            marker = BACKUP_DIR / f".{row['id']}.worker"
             archive = BACKUP_DIR / f"{row['id']}.tar.gz"
-            if archive.exists():
+            worker_alive = False
+            if marker.exists():
                 try:
-                    if now - int(archive.stat().st_mtime) < 5 * 60:
-                        continue
-                except OSError:
-                    continue
-                archive.unlink(missing_ok=True)
+                    pid = int(marker.read_text(encoding="utf-8").strip())
+                    worker_alive = pid > 1 and Path(f"/proc/{pid}").exists()
+                except (OSError, ValueError):
+                    worker_alive = False
+            elif now - int(row['created_at']) < 15 * 60:
+                # A queued worker may not have created its marker yet.
+                continue
+            if worker_alive:
+                continue
+            archive.unlink(missing_ok=True)
+            marker.unlink(missing_ok=True)
             connection.execute(
                 "UPDATE backups SET status='failed',completed_at=?,size=0,path=NULL,checksum=NULL,error=? WHERE id=?",
                 (now, "Interrupted: backup worker stopped unexpectedly; incomplete archive removed.", row['id']),
