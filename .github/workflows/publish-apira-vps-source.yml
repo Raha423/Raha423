@@ -1,6 +1,6 @@
 name: Publish Apira VPS source tree
 # Keeps the expanded source tree synchronized with the current published packages.
-# v3 audited package/source sync
+# v4 final audited package/source sync
 # republish after full tools audit, reliability, API Core, Network and Tools Center fixes
 
 on:
