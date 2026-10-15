@@ -41,6 +41,15 @@ def patch(index: Path) -> None:
         raise SystemExit('safe_excludes anchor not found')
     py = safe_pattern.sub(lambda _m: safe_excludes + '\n\ndef checksum', py, count=1)
 
+    # Scheduled jobs must have enough room for roughly the previous successful
+    # archive plus an additional 1 GiB safety margin before they start.
+    old_space = '''        if shutil.disk_usage(BACKUP_DIR).free < MIN_FREE_BYTES:\n            raise RuntimeError("Backup stopped because less than 512 MB of local disk space is available.")\n'''
+    new_space = '''        free_bytes = shutil.disk_usage(BACKUP_DIR).free\n        required_free = MIN_FREE_BYTES\n        if schedule_id:\n            with database() as connection:\n                previous = connection.execute(\n                    "SELECT size FROM backups WHERE schedule_id=? AND status='completed' AND size>0 AND id<>? ORDER BY completed_at DESC LIMIT 1",\n                    (schedule_id, backup_id),\n                ).fetchone()\n            if previous:\n                required_free = max(required_free, int(previous["size"]) + 1024 * 1024 * 1024)\n        if free_bytes < required_free:\n            need_gb = required_free / (1024 ** 3)\n            free_gb = free_bytes / (1024 ** 3)\n            raise RuntimeError(f"Backup stopped before start: {free_gb:.2f} GB free; at least {need_gb:.2f} GB is required for the previous backup size plus a 1 GB safety margin.")\n'''
+    if old_space in py:
+        py = py.replace(old_space, new_space, 1)
+    elif 'previous backup size plus a 1 GB safety margin' not in py:
+        raise SystemExit('initial disk-space guard anchor not found')
+
     # Check free space throughout archive creation, not only once at startup.
     old_tar = '''        with tarfile.open(archive, "w:gz", compresslevel=6) as bundle:\n            for source_text in sources:\n                source = Path(source_text)\n                arcname = str(source).lstrip("/")\n                bundle.add(\n                    source,\n                    arcname=arcname,\n                    recursive=True,\n                    filter=lambda info: None\n                    if excluded(Path(info.name), excludes) else info,\n                )\n'''
     new_tar = '''        checked_members = 0\n        def archive_filter(info: tarfile.TarInfo):\n            nonlocal checked_members\n            checked_members += 1\n            if checked_members % 128 == 0 and shutil.disk_usage(BACKUP_DIR).free < MIN_FREE_BYTES:\n                raise RuntimeError("Backup stopped because less than 512 MB of local disk space is available.")\n            return None if excluded(Path(info.name), excludes) else info\n\n        with tarfile.open(archive, "w:gz", compresslevel=6) as bundle:\n            for source_text in sources:\n                source = Path(source_text)\n                arcname = str(source).lstrip("/")\n                bundle.add(source, arcname=arcname, recursive=True, filter=archive_filter)\n'''
